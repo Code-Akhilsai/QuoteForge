@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Avatar";
@@ -8,6 +8,7 @@ import { NavIcon } from "@/components/ui/Icons";
 export default function TopNav() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 bg-white/80 backdrop-blur border-b border-slate-200 px-4">
@@ -26,13 +27,9 @@ export default function TopNav() {
         </Link>
 
         <div className="flex items-center gap-2">
-          <div className="relative">
-            <div className="absolute -right-2 -top-2 size-2.5 rounded-full bg-emerald-500 ring-2 ring-white"></div>
-            <Button variant="outline" size="small" className="px-3" aria-label="Notifications">
-              <NavIcon name="Bell" size={18} />
-              <span className="absolute right-0 top-0 size-2.5 rounded-full bg-rose-500 ring-2 ring-white"></span>
-            </Button>
-          </div>
+          <Button variant="outline" size="small" className="px-3" aria-label="Notifications">
+            <NavIcon name="Bell" size={18} />
+          </Button>
 
           <div className="relative group" onClick={() => setUserMenuOpen(!userMenuOpen)}>
             <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors">
@@ -62,7 +59,7 @@ export default function TopNav() {
                   >
                     <NavIcon name="Settings" size={16} /> Settings
                   </button>
-                  <button onClick={logout} className="flex w-full items-center gap-2 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 rounded-md transition-colors">
+                  <button onClick={() => { logout(); navigate("/login"); }} className="flex w-full items-center gap-2 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 rounded-md transition-colors">
                     <NavIcon name="LogOut" size={16} /> Sign out
                   </button>
                 </div>

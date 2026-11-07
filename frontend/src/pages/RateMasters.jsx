@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Badge } from "@/components/ui/Badge";
 import { TableContainer, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
-import { MOCK_RATE_MASTERS } from "@/data/mockData";
 
 const CATEGORY_COLOR = {
   Ferrous: "bg-slate-100 text-slate-700",
@@ -19,20 +18,22 @@ const CATEGORY_COLOR = {
 
 export default function RateMasters() {
   const [activeTab, setActiveTab] = useState("materials");
-  const [materials, setMaterials] = useState([...MOCK_RATE_MASTERS.materials]);
-  const [machines, setMachines] = useState([...MOCK_RATE_MASTERS.machines]);
+  const [materials, setMaterials] = useState([]);
+  const [machines, setMachines] = useState([]);
 
   const form = useForm({
-    defaultValues: { name: "", unit: "kg", rate: "", category: "Ferrous" },
+    defaultValues: { name: "", unit: "kg", rate: "", category: "Ferrous", type: "material", effectiveDate: new Date().toISOString().slice(0, 10), endDate: "" },
   });
 
   const addMaterial = (data) => {
     const newItem = {
-      id: "M-" + String(100 + materials.length).padStart(3, "0"),
+      id: Date.now().toString(),
       name: data.name,
       unit: data.unit,
       rate: parseFloat(data.rate),
       category: data.category,
+      effectiveDate: data.effectiveDate,
+      endDate: data.endDate || null,
       updatedAt: new Date().toISOString().slice(0, 10),
     };
     setMaterials([...materials, newItem]);
@@ -41,10 +42,12 @@ export default function RateMasters() {
 
   const addMachine = (data) => {
     const newItem = {
-      id: "MC-" + String(100 + machines.length).padStart(3, "0"),
+      id: Date.now().toString(),
       name: data.name,
       ratePerHour: parseFloat(data.rate),
       category: data.category,
+      effectiveDate: data.effectiveDate,
+      endDate: data.endDate || null,
       updatedAt: new Date().toISOString().slice(0, 10),
     };
     setMachines([...machines, newItem]);
@@ -59,7 +62,7 @@ export default function RateMasters() {
       <div className="page-header">
         <div>
           <h1 className="section-title">Rate Masters</h1>
-          <p className="section-subtitle">Manage material and machine rates used for cost estimation</p>
+          <p className="section-subtitle">Add material and machine rates manually or via upload</p>
         </div>
         <Button variant="outline" size="small">
           <Save className="mr-2 size-4" /> Save All
@@ -119,6 +122,14 @@ export default function RateMasters() {
                       <option value="Non-Ferrous">Non-Ferrous</option>
                     </Select>
                   </div>
+                  <div className="space-y-1 flex items-end">
+                    <label className="label-field">Effective Date</label>
+                    <Input type="date" {...form.register("effectiveDate")} required />
+                  </div>
+                  <div className="space-y-1 flex items-end">
+                    <label className="label-field">End Date</label>
+                    <Input type="date" {...form.register("endDate")} />
+                  </div>
                 </div>
                 <div className="flex justify-end">
                   <Button type="submit" size="small">Add Material</Button>
@@ -128,34 +139,46 @@ export default function RateMasters() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Material</TableHead>
-                      <TableHead className="text-center w-16">Unit</TableHead>
-                      <TableHead className="text-right w-20">Rate (₹)</TableHead>
-                      <TableHead className="w-24">Category</TableHead>
-                      <TableHead className="text-right w-16">Updated</TableHead>
-                      <TableHead className="w-16">Actions</TableHead>
+                  <TableHead>Material</TableHead>
+                  <TableHead className="text-center w-16">Unit</TableHead>
+                  <TableHead className="text-right w-20">Rate (₹)</TableHead>
+                  <TableHead className="w-24">Category</TableHead>
+                  <TableHead className="text-right w-20">Effective</TableHead>
+                  <TableHead className="text-right w-20">End Date</TableHead>
+                  <TableHead className="text-right w-16">Updated</TableHead>
+                  <TableHead className="w-16">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {materials.map((m) => (
-                      <TableRow key={m.id}>
-                        <TableCell className="font-medium">{m.name}</TableCell>
-                        <TableCell className="text-center text-sm text-slate-500">{m.unit}</TableCell>
-                        <TableCell className="text-right font-medium">₹{m.rate}</TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant={m.category === "Ferrous" ? "secondary" : "info"} className="text-[10px] px-2 py-1">{m.category}</Badge>
-                        </TableCell>
-                        <TableCell className="text-right text-xs text-slate-500">{m.updatedAt}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center gap-1">
-                            <Button size="small" variant="ghost" className="p-1" title="Edit"><Edit className="size-3.5" /></Button>
-                            <Button size="small" variant="ghost" className="p-1 text-rose-500" title="Delete" onClick={() => deleteMaterial(m.id)}>
-                              <Trash2 className="size-3.5" />
-                            </Button>
-                          </div>
+                    {materials.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center py-8 text-sm text-slate-500">
+                          No materials found. Add your first material rate.
                         </TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      materials.map((m) => (
+                        <TableRow key={m.id}>
+                          <TableCell className="font-medium">{m.name}</TableCell>
+                          <TableCell className="text-center text-sm text-slate-500">{m.unit}</TableCell>
+                          <TableCell className="text-right font-medium">₹{m.rate}</TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant={m.category === "Ferrous" ? "secondary" : "info"} className="text-[10px] px-2 py-1">{m.category}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right text-xs text-slate-500">{m.effectiveDate}</TableCell>
+                          <TableCell className="text-right text-xs text-slate-500">{m.endDate || "-"}</TableCell>
+                          <TableCell className="text-right text-xs text-slate-500">{m.updatedAt}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center gap-1">
+                              <Button size="small" variant="ghost" className="p-1" title="Edit"><Edit className="size-3.5" /></Button>
+                              <Button size="small" variant="ghost" className="p-1 text-rose-500" title="Delete" onClick={() => deleteMaterial(m.id)}>
+                                <Trash2 className="size-3.5" />
+                              </Button>
+                            </div>
+</TableCell>
+                        </TableRow>
+                      )))
+                    }
                   </TableBody>
                 </Table>
               </TableContainer>
@@ -190,6 +213,14 @@ export default function RateMasters() {
                       <option value="Fabrication">Fabrication</option>
                     </Select>
                   </div>
+                  <div className="space-y-1 flex items-end">
+                    <label className="label-field">Effective Date</label>
+                    <Input type="date" {...form.register("effectiveDate")} required />
+                  </div>
+                  <div className="space-y-1 flex items-end">
+                    <label className="label-field">End Date</label>
+                    <Input type="date" {...form.register("endDate")} />
+                  </div>
                   <div className="flex items-end col-span-1">
                     <Button type="submit" size="small">Add Machine</Button>
                   </div>
@@ -199,32 +230,44 @@ export default function RateMasters() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Machine</TableHead>
-                      <TableHead className="text-right w-20">Rate / Hour (₹)</TableHead>
-                      <TableHead className="w-24">Category</TableHead>
-                      <TableHead className="text-right w-16">Updated</TableHead>
-                      <TableHead className="w-16">Actions</TableHead>
+                  <TableHead>Machine</TableHead>
+                  <TableHead className="text-right w-20">Rate / Hour (₹)</TableHead>
+                  <TableHead className="w-24">Category</TableHead>
+                  <TableHead className="text-right w-20">Effective</TableHead>
+                  <TableHead className="text-right w-20">End Date</TableHead>
+                  <TableHead className="text-right w-16">Updated</TableHead>
+                  <TableHead className="w-16">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {machines.map((m) => (
-                      <TableRow key={m.id}>
-                        <TableCell className="font-medium">{m.name}</TableCell>
-                        <TableCell className="text-right font-medium">₹{m.ratePerHour}</TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant={CATEGORY_COLOR[m.category] || "secondary"} className="text-[10px] px-2 py-1">{m.category}</Badge>
-                        </TableCell>
-                        <TableCell className="text-right text-xs text-slate-500">{m.updatedAt}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center gap-1">
-                            <Button size="small" variant="ghost" className="p-1" title="Edit"><Edit className="size-3.5" /></Button>
-                            <Button size="small" variant="ghost" className="p-1 text-rose-500" title="Delete" onClick={() => deleteMachine(m.id)}>
-                              <Trash2 className="size-3.5" />
-                            </Button>
-                          </div>
+                    {machines.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-8 text-sm text-slate-500">
+                          No machines found. Add your first machine rate.
                         </TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      machines.map((m) => (
+                        <TableRow key={m.id}>
+                          <TableCell className="font-medium">{m.name}</TableCell>
+                          <TableCell className="text-right font-medium">₹{m.ratePerHour}</TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant={CATEGORY_COLOR[m.category] || "secondary"} className="text-[10px] px-2 py-1">{m.category}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right text-xs text-slate-500">{m.effectiveDate}</TableCell>
+                          <TableCell className="text-right text-xs text-slate-500">{m.endDate || "-"}</TableCell>
+                          <TableCell className="text-right text-xs text-slate-500">{m.updatedAt}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center gap-1">
+                              <Button size="small" variant="ghost" className="p-1" title="Edit"><Edit className="size-3.5" /></Button>
+                              <Button size="small" variant="ghost" className="p-1 text-rose-500" title="Delete" onClick={() => deleteMachine(m.id)}>
+                                <Trash2 className="size-3.5" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )))
+                    }
                   </TableBody>
                 </Table>
               </TableContainer>

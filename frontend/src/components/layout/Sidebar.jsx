@@ -65,7 +65,7 @@ export default function Sidebar() {
           <Button
             variant="ghost"
             size="small"
-            onClick={logout}
+            onClick={() => { logout(); navigate("/login"); }}
             className={cn(collapsed ? "ml-auto" : "", "px-2 py-1.5")}
             icon={<NavIcon name="LogOut" size={16} />}
           />
@@ -80,7 +80,7 @@ export default function Sidebar() {
           <Button variant="ghost" size="small" className="size-9" title="Settings" onClick={() => navigate(ROUTES.SETTINGS ?? "/")}>
             <NavIcon name="Settings" size={18} />
           </Button>
-          <Button variant="ghost" size="small" className="size-9" title="Logout" onClick={logout}>
+          <Button variant="ghost" size="small" className="size-9" title="Logout" onClick={() => { logout(); navigate("/login"); }}>
             <NavIcon name="LogOut" size={18} />
           </Button>
         </div>

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { Mail, BarChart3, Clock, Save, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -7,13 +6,12 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { TableContainer, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
-import { MOCK_RFQS, STATUS_LABELS, STATUS_BADGE } from "@/data/mockData";
 import { formatCurrency, formatDate } from "@/utils/helpers";
 
 export default function RFQManagement() {
-  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [rfqs, setRFQs] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
 
   const form = useForm({
@@ -28,16 +26,30 @@ export default function RFQManagement() {
     },
   });
 
-  const filtered = MOCK_RFQS.filter((r) => {
+  const filtered = rfqs.filter((r) => {
     const matchesSearch = r.customerName.toLowerCase().includes(search.toLowerCase()) || r.productName.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = statusFilter === "all" || r.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  const handleSubmit = () => {
-    setOpenDialog(false);
-    form.reset();
-    navigate("/rfq");
+  const addRFQ = (data) => {
+    const newRFQ = {
+      id: Date.now().toString(),
+      rfqNumber: "RFQ-" + String(1000 + rfqs.length).padStart(4, "0"),
+      customerName: data.customerName,
+      customerEmail: data.customerEmail,
+      customerPhone: data.customerPhone,
+      productName: data.productName,
+      quantity: parseInt(data.quantity, 10),
+      priority: data.priority,
+      deadline: data.deadline,
+      estimatedValue: 0,
+      status: "estimating",
+      lossReason: data.lossReason || "",
+      createdAt: new Date().toISOString(),
+      owner: "",
+    };
+    setRFQs([...rfqs, newRFQ]);
   };
 
   return (
@@ -77,10 +89,10 @@ export default function RFQManagement() {
               >
                 <option value="all">All statuses</option>
                 <option value="draft">Draft</option>
-                <option value="open">Open</option>
-                <option value="quoted">Quoted</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
+                <option value="estimating">Estimating</option>
+                <option value="sent">Sent</option>
+                <option value="won">Won</option>
+                <option value="lost">Lost</option>
               </select>
             </div>
           </div>
@@ -106,13 +118,13 @@ export default function RFQManagement() {
                   {filtered.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={9} className="text-center py-8 text-sm text-slate-500">
-                        No RFQs found
+                        No RFQs found. Add your first RFQ or upload data.
                       </TableCell>
                     </TableRow>
                   ) : (
                     filtered.map((rfq) => (
                       <TableRow key={rfq.id}>
-                        <TableCell className="font-medium">{rfq.id}</TableCell>
+                        <TableCell className="font-medium">{rfq.rfqNumber}</TableCell>
                         <TableCell>
                           <div className="font-medium">{rfq.customerName}</div>
                           <div className="text-xs text-slate-500">{rfq.owner}</div>
@@ -124,9 +136,9 @@ export default function RFQManagement() {
                         <TableCell className="text-right">{rfq.quantity}</TableCell>
                         <TableCell className="text-right font-medium">{formatCurrency(rfq.estimatedValue)}</TableCell>
                         <TableCell className="text-center">
-                          <Badge variant={STATUS_BADGE[rfq.status]}>{STATUS_LABELS[rfq.status]}</Badge>
+                          <Badge variant={rfq.status === "estimating" ? "info" : rfq.status === "sent" ? "warning" : rfq.status === "won" ? "success" : rfq.status === "lost" ? "danger" : "info"}>{rfq.status}</Badge>
                         </TableCell>
-                        <TableCell className="text-right text-xs text-slate-500">{formatDate(rfq.deadline)}</TableCell>
+                        <TableCell className="text-right text-xs text-slate-500">{formatDate(rfq.deadline || "-")}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center gap-1">
                             <Button size="small" variant="ghost" className="p-1.5" title="Edit">
@@ -148,7 +160,7 @@ export default function RFQManagement() {
       </Card>
 
       <div
-        className={cn("fixed inset-0 z-50 flex items-center justify-center", openDialog ? "" : "hidden")}
+        className={`fixed inset-0 z-50 flex items-center justify-center ${openDialog ? "" : "hidden"}`}
         onClick={(e) => e.target === e.currentTarget && setOpenDialog(false)}
       >
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setOpenDialog(false)} />
@@ -158,7 +170,7 @@ export default function RFQManagement() {
               <CardTitle>Create New RFQ</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+              <form onSubmit={(e) => { e.preventDefault(); addRFQ(form.getValues()); }} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="label-field">Customer Name</label>
@@ -197,6 +209,10 @@ export default function RFQManagement() {
                   <label className="label-field">Deadline</label>
                   <Input type="date" {...form.register("deadline")} required />
                 </div>
+                <div className="space-y-1">
+                  <label className="label-field">Loss Reason</label>
+                  <Input placeholder="Reason for losing this RFQ" {...form.register("lossReason")} />
+                </div>
                 <div className="flex justify-end gap-3 pt-2">
                   <Button type="button" variant="outline" size="small" onClick={() => setOpenDialog(false)}>
                     Cancel
@@ -212,6 +228,3 @@ export default function RFQManagement() {
   );
 }
 
-function cn(...inputs) {
-  return inputs.filter(Boolean).join(" ");
-}
