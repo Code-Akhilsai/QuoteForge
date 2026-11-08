@@ -20,7 +20,7 @@ export const createQuotation = async (req, res) => {
       validTill,
     } = req.body;
 
-    if (!customerName || !customerEmail || !productName || !quantity || !unitCost || !totalCost) {
+    if (!customerName || !productName || !quantity || unitCost === undefined || totalCost === undefined) {
       return res.status(400).json({ success: false, message: "All required fields must be provided" });
     }
 
@@ -29,7 +29,7 @@ export const createQuotation = async (req, res) => {
     const quotationData = {
       quotationNumber,
       customerName,
-      customerEmail,
+      customerEmail: customerEmail || "",
       productName,
       quantity,
       unitCost,
@@ -40,7 +40,7 @@ export const createQuotation = async (req, res) => {
 
     if (rfqId) {
       quotationData.rfq = rfqId;
-      await RFQ.findByIdAndUpdate(rfqId, { status: "quoted" });
+      await RFQ.findByIdAndUpdate(rfqId, { status: "sent" });
     }
 
     const quotation = await Quotation.create(quotationData);

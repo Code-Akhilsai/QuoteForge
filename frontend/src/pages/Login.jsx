@@ -24,10 +24,33 @@ export default function Login() {
     defaultValues: { email: "", password: "", role: "estimator" },
   });
 
-  const onSubmit = (data) => {
+  const onSubmit = async (data) => {
     setError("");
     setIsLoading(true);
-    setTimeout(() => {
+    try {
+      const res = await fetch("http://localhost:3000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email: data.email, password: data.password }),
+      });
+      const result = await res.json();
+      if (res.ok && result.success) {
+        login(result.user, result.token);
+        navigate(ROUTES.DASHBOARD);
+      } else {
+        // Fallback for mock if backend offline or user not seeded
+        const user = CREDENTIALS.find(
+          (c) => c.email === data.email && c.password === data.password && c.role === data.role,
+        );
+        if (user) {
+          login({ id: "USR-001", name: user.name, email: user.email, role: user.role }, "mock-token");
+          navigate(ROUTES.DASHBOARD);
+        } else {
+          setError(result.message || "Invalid email, password, or role combination.");
+        }
+      }
+    } catch {
       const user = CREDENTIALS.find(
         (c) => c.email === data.email && c.password === data.password && c.role === data.role,
       );
@@ -37,8 +60,9 @@ export default function Login() {
       } else {
         setError("Invalid email, password, or role combination.");
       }
+    } finally {
       setIsLoading(false);
-    }, 600);
+    }
   };
 
   return (

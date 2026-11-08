@@ -1,18 +1,38 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Mail, BarChart3, Clock, Save, Plus } from "lucide-react";
+import { Mail, BarChart3, Clock, Save, Plus, Sparkles, Calculator } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { TableContainer, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
 import { formatCurrency, formatDate } from "@/utils/helpers";
+import axios from "@/api";
+import { useNavigate } from "react-router-dom";
 
 export default function RFQManagement() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [rfqs, setRFQs] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [aiText, setAiText] = useState("");
+  const [aiNotes, setAiNotes] = useState("");
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiError, setAiError] = useState("");
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await axios.get("/rfqs");
+        setRFQs(res.data.rfqs || []);
+      } catch {
+        // ignore
+      }
+    };
+    void load();
+  }, []);
 
   const form = useForm({
     defaultValues: {
@@ -23,16 +43,181 @@ export default function RFQManagement() {
       quantity: "",
       priority: "medium",
       deadline: "",
+      estimatedValue: "",
     },
   });
 
   const filtered = rfqs.filter((r) => {
-    const matchesSearch = r.customerName.toLowerCase().includes(search.toLowerCase()) || r.productName.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch =
+      (r.customerName || "").toLowerCase().includes(search.toLowerCase()) ||
+      (r.productName || "").toLowerCase().includes(search.toLowerCase()) ||
+      (r.rfqNumber || "").toLowerCase().includes(search.toLowerCase());
     const matchesStatus = statusFilter === "all" || r.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  const addRFQ = (data) => {
+  const editRFQ = async (data) => {
+    if (!editingId) return;
+    try {
+      const res = await axios.put(`/rfqs/${editingId}`, {
+        customerName: data.customerName,
+        customerEmail: data.customerEmail,
+        customerPhone: data.customerPhone,
+        productName: data.productName,
+        quantity: parseInt(data.quantity, 10),
+        priority: data.priority || "medium",
+        deadline: data.deadline || null,
+        estimatedValue: parseFloat(data.estimatedValue) || 0,
+        status: data.status || "estimating",
+        lossReason: data.lossReason || "",
+      });
+      if (res.status === 200) {
+        const load = async () => {
+          try {
+            const res2 = await axios.get("/rfqs");
+            setRFQs(res2.data.rfqs || []);
+          } catch {
+            // ignore
+          }
+        };
+        await load();
+        setOpenDialog(false);
+        setEditingId(null);
+        form.reset();
+        return;
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const deleteRFQ = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this RFQ?")) return;
+    try {
+      await axios.delete(`/rfqs/${id}`);
+      const load = async () => {
+        try {
+          const res2 = await axios.get("/rfqs");
+          setRFQs(res2.data.rfqs || []);
+        } catch {
+          // ignore
+        }
+      };
+      await load();
+    } catch {
+      // ignore
+    }
+  };
+
+  const openEdit = (rfq) => {
+    setEditingId(rfq._id);
+    form.reset({
+      customerName: rfq.customerName || "",
+      customerEmail: rfq.customerEmail || "",
+      customerPhone: rfq.customerPhone || "",
+      productName: rfq.productName || "",
+      quantity: rfq.quantity || "",
+      priority: rfq.priority || "medium",
+      deadline: rfq.deadline ? new Date(rfq.deadline).toISOString().slice(0, 10) : "",
+      estimatedValue: rfq.estimatedValue || "",
+      status: rfq.status || "estimating",
+      lossReason: rfq.lossReason || "",
+    });
+    setOpenDialog(true);
+  };
+
+  const openCreate = () => {
+    setEditingId(null);
+    setAiText("");
+    setAiNotes("");
+    setAiError("");
+    form.reset({
+      customerName: "",
+      customerEmail: "",
+      customerPhone: "",
+      productName: "",
+      quantity: "",
+      priority: "medium",
+      deadline: "",
+      estimatedValue: "",
+      status: "estimating",
+      lossReason: "",
+    });
+    setOpenDialog(true);
+  };
+
+  const extractWithAI = async () => {
+    if (!aiText.trim()) {
+      setAiError("Paste RFQ email or text first.");
+      return;
+    }
+    setAiBusy(true);
+    setAiError("");
+    try {
+      const res = await axios.post("/ai/rfq-intake", { text: aiText });
+      const d = res.data?.rfq || {};
+      form.reset({
+        ...form.getValues(),
+        customerName: d.customerName || "",
+        customerEmail: d.customerEmail || "",
+        customerPhone: d.customerPhone || "",
+        productName: d.productName || "",
+        quantity: d.quantity ? String(d.quantity) : "",
+        priority: d.priority || "medium",
+        deadline: d.deadline || "",
+        estimatedValue: d.estimatedValue ? String(d.estimatedValue) : "",
+        status: "estimating",
+        lossReason: form.getValues("lossReason") || "",
+      });
+      setAiNotes(d.notes || "");
+    } catch (e) {
+      setAiError(e?.response?.data?.message || "AI extraction failed. You can still fill the form manually.");
+    } finally {
+      setAiBusy(false);
+    }
+  };
+
+  const handleSubmit = () => {
+    const values = form.getValues();
+    if (editingId) {
+      editRFQ(values);
+    } else {
+      addRFQ(values);
+    }
+  };
+
+  const addRFQ = async (data) => {
+    try {
+      const res = await axios.post("/rfqs", {
+        customerName: data.customerName,
+        customerEmail: data.customerEmail,
+        customerPhone: data.customerPhone,
+        productName: data.productName,
+        quantity: parseInt(data.quantity, 10),
+        priority: data.priority || "medium",
+        deadline: data.deadline || null,
+        estimatedValue: parseFloat(data.estimatedValue) || 0,
+        status: "estimating",
+        lossReason: data.lossReason || "",
+      });
+      if (res.status === 201 || res.status === 200) {
+        const load = async () => {
+          try {
+            const res2 = await axios.get("/rfqs");
+            setRFQs(res2.data.rfqs || []);
+          } catch {
+            // ignore
+          }
+        };
+        await load();
+        setOpenDialog(false);
+        form.reset();
+        return;
+      }
+    } catch {
+      // ignore
+    }
+
     const newRFQ = {
       id: Date.now().toString(),
       rfqNumber: "RFQ-" + String(1000 + rfqs.length).padStart(4, "0"),
@@ -41,7 +226,7 @@ export default function RFQManagement() {
       customerPhone: data.customerPhone,
       productName: data.productName,
       quantity: parseInt(data.quantity, 10),
-      priority: data.priority,
+      priority: data.priority || "medium",
       deadline: data.deadline,
       estimatedValue: 0,
       status: "estimating",
@@ -60,11 +245,21 @@ export default function RFQManagement() {
           <p className="section-subtitle">Manage customer Request for Quotation (RFQ) records</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="small" onClick={() => setOpenDialog(true)}>
+          <Button variant="outline" size="small" onClick={() => openCreate()}>
             <Plus className="mr-2 size-4" /> New RFQ
           </Button>
-          <Button>
-            <Save className="mr-2 size-4" /> Save Changes
+          <Button onClick={() => {
+            const load = async () => {
+              try {
+                const res = await axios.get("/rfqs");
+                setRFQs(res.data.rfqs || []);
+              } catch {
+                // ignore
+              }
+            };
+            void load();
+          }}>
+            <Save className="mr-2 size-4" /> Refresh
           </Button>
         </div>
       </div>
@@ -123,11 +318,11 @@ export default function RFQManagement() {
                     </TableRow>
                   ) : (
                     filtered.map((rfq) => (
-                      <TableRow key={rfq.id}>
+                      <TableRow key={rfq._id || rfq.id}>
                         <TableCell className="font-medium">{rfq.rfqNumber}</TableCell>
                         <TableCell>
                           <div className="font-medium">{rfq.customerName}</div>
-                          <div className="text-xs text-slate-500">{rfq.owner}</div>
+                          <div className="text-xs text-slate-500">{rfq.owner || rfq.createdBy?.name || ""}</div>
                         </TableCell>
                         <TableCell className="hidden lg:table-cell text-sm text-slate-500">
                           {rfq.customerEmail}
@@ -138,13 +333,16 @@ export default function RFQManagement() {
                         <TableCell className="text-center">
                           <Badge variant={rfq.status === "estimating" ? "info" : rfq.status === "sent" ? "warning" : rfq.status === "won" ? "success" : rfq.status === "lost" ? "danger" : "info"}>{rfq.status}</Badge>
                         </TableCell>
-                        <TableCell className="text-right text-xs text-slate-500">{formatDate(rfq.deadline || "-")}</TableCell>
+                        <TableCell className="text-right text-xs text-slate-500">{rfq.deadline ? formatDate(rfq.deadline) : "-"}</TableCell>
                         <TableCell className="text-right">
-                          <div className="flex items-center gap-1">
-                            <Button size="small" variant="ghost" className="p-1.5" title="Edit">
+                          <div className="flex items-center gap-1 justify-end">
+                            <Button size="small" variant="ghost" className="p-1.5" title="Convert to Quotation" onClick={() => navigate("/cost-estimation", { state: { rfqId: rfq._id || rfq.id } })}>
+                              <Calculator className="size-4" />
+                            </Button>
+                            <Button size="small" variant="ghost" className="p-1.5" title="Edit" onClick={() => openEdit(rfq)}>
                               <BarChart3 className="size-4" />
                             </Button>
-                            <Button size="small" variant="ghost" className="p-1.5" title="Convert to Quotation">
+                            <Button size="small" variant="ghost" className="p-1.5 text-rose-500" title="Delete" onClick={() => deleteRFQ(rfq._id || rfq.id)}>
                               <Clock className="size-4" />
                             </Button>
                           </div>
@@ -160,17 +358,39 @@ export default function RFQManagement() {
       </Card>
 
       <div
-        className={`fixed inset-0 z-50 flex items-center justify-center ${openDialog ? "" : "hidden"}`}
+        className={`fixed inset-0 z-50 overflow-y-auto p-4 sm:p-6 ${openDialog ? "" : "hidden"}`}
         onClick={(e) => e.target === e.currentTarget && setOpenDialog(false)}
       >
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setOpenDialog(false)} />
-        <div className="relative w-full max-w-lg p-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Create New RFQ</CardTitle>
+        <div className="relative mx-auto flex min-h-full w-full max-w-lg items-start justify-center py-4 sm:items-center">
+          <Card className="w-full max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)] flex flex-col overflow-hidden">
+            <CardHeader className="shrink-0">
+              <CardTitle>{editingId ? "Edit RFQ" : "Create New RFQ"}</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <form onSubmit={(e) => { e.preventDefault(); addRFQ(form.getValues()); }} className="space-y-4">
+            <CardContent className="overflow-y-auto min-h-0">
+              <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-4">
+                {!editingId && (
+                  <div className="space-y-3 p-4 rounded-xl border border-indigo-100 bg-indigo-50/40">
+                    <label className="label-field flex items-center gap-2 text-indigo-900">
+                      <Sparkles className="size-4 text-indigo-600 shrink-0" /> AI RFQ Intake (Gemini)
+                    </label>
+                    <textarea
+                      value={aiText}
+                      onChange={(e) => setAiText(e.target.value)}
+                      rows={4}
+                      placeholder="Paste RFQ email or text. AI will extract fields; review before creating."
+                      className="w-full text-sm border border-slate-200 rounded-lg bg-white px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y min-h-[96px]"
+                    />
+                    {aiError && <p className="text-xs text-rose-600">{aiError}</p>}
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                      <Button type="button" size="small" variant="primary" onClick={extractWithAI} disabled={aiBusy} className="shrink-0 self-start">
+                        <Sparkles className="mr-1.5 size-4" /> {aiBusy ? "Extracting..." : "Extract with AI"}
+                      </Button>
+                      <span className="text-xs text-slate-600 leading-snug">Review and edit extracted values below before creating the RFQ.</span>
+                    </div>
+                    {aiNotes && <p className="text-xs text-slate-700 bg-white border border-slate-200 rounded-lg p-2.5"><span className="font-medium text-slate-900">AI notes:</span> {aiNotes}</p>}
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="label-field">Customer Name</label>
@@ -192,12 +412,16 @@ export default function RFQManagement() {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="label-field">Quantity</label>
-                    <Input type="number" placeholder="Units" {...form.register("quantity")} required />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="label-field">Priority</label>
+                <div className="space-y-1">
+                  <label className="label-field">Quantity</label>
+                  <Input type="number" placeholder="Units" {...form.register("quantity")} required />
+                </div>
+                <div className="space-y-1">
+                  <label className="label-field">Estimated Value (₹)</label>
+                  <Input type="number" placeholder="0.00" {...form.register("estimatedValue")} />
+                </div>
+                <div className="space-y-1">
+                  <label className="label-field">Priority</label>
                     <select {...form.register("priority")} className="input-field">
                       <option value="low">Low</option>
                       <option value="medium">Medium</option>
@@ -217,7 +441,7 @@ export default function RFQManagement() {
                   <Button type="button" variant="outline" size="small" onClick={() => setOpenDialog(false)}>
                     Cancel
                   </Button>
-                  <Button type="submit">Create RFQ</Button>
+                  <Button type="submit">{editingId ? "Save RFQ" : "Create RFQ"}</Button>
                 </div>
               </form>
             </CardContent>
@@ -227,4 +451,3 @@ export default function RFQManagement() {
     </div>
   );
 }
-

@@ -14,13 +14,13 @@ const rfqSchema = new mongoose.Schema(
     },
     customerEmail: {
       type: String,
-      required: [true, "Customer email is required"],
+      default: "",
       lowercase: true,
       trim: true,
     },
     customerPhone: {
       type: String,
-      required: [true, "Customer phone is required"],
+      default: "",
       trim: true,
     },
     productName: {

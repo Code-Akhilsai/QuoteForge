@@ -28,7 +28,7 @@ const rateMasterSchema = new mongoose.Schema(
     },
     effectiveDate: {
       type: Date,
-      required: [true, "Effective date is required"],
+      default: Date.now,
     },
     endDate: {
       type: Date,

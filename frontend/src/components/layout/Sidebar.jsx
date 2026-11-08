@@ -1,10 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { ROUTES, NAV_ITEMS } from "@/utils/helpers";
+import { NAV_ITEMS } from "@/utils/helpers";
 import { NavIcon } from "@/components/ui/Icons";
-import { Button } from "@/components/ui/Button";
-import { Avatar } from "@/components/ui/Avatar";
 
 export default function Sidebar() {
   const navigate = useNavigate();
@@ -56,35 +54,12 @@ export default function Sidebar() {
       </nav>
 
       <div className="p-3 border-t border-slate-200 bg-slate-50">
-        <div className={cn("flex items-center gap-3 p-2 rounded-lg hover:bg-slate-200 transition-colors", collapsed ? "flex-col items-start gap-2" : "")}>
-          <Avatar src={undefined} alt={user?.name ?? "U"} className="size-8" />
-          <div className={cn(collapsed ? "hidden" : "flex flex-col min-w-0 flex-1")}>
-            <div className="text-sm font-medium text-slate-900 truncate">{user?.name ?? "User"}</div>
-            <div className="text-xs text-slate-500 truncate capitalize">{user?.role ?? ""}</div>
-          </div>
-          <Button
-            variant="ghost"
-            size="small"
-            onClick={() => { logout(); navigate("/login"); }}
-            className={cn(collapsed ? "ml-auto" : "", "px-2 py-1.5")}
-            icon={<NavIcon name="LogOut" size={16} />}
-          />
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-200 transition-colors">
+          <button onClick={() => { logout(); navigate("/login"); }} className="flex items-center gap-2 px-2 py-1.5 text-sm text-rose-600 hover:bg-rose-50 rounded-md transition-colors">
+            <NavIcon name="LogOut" size={16} /> Sign out
+          </button>
         </div>
       </div>
-
-      {collapsed && (
-        <div className="absolute bottom-4 left-4 right-4 flex items-center justify-center gap-2 p-2 bg-white rounded-xl border border-slate-200 shadow-sm">
-          <Button variant="ghost" size="small" className="size-9" title="Profile">
-            <NavIcon name="User" size={18} />
-          </Button>
-          <Button variant="ghost" size="small" className="size-9" title="Settings" onClick={() => navigate(ROUTES.SETTINGS ?? "/")}>
-            <NavIcon name="Settings" size={18} />
-          </Button>
-          <Button variant="ghost" size="small" className="size-9" title="Logout" onClick={() => { logout(); navigate("/login"); }}>
-            <NavIcon name="LogOut" size={18} />
-          </Button>
-        </div>
-      )}
     </aside>
   );
 }

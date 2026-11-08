@@ -42,11 +42,19 @@ export function AuthProvider({ children }) {
   const login = (user, token) => {
     const payload = { user, token };
     localStorage.setItem("qf_auth", JSON.stringify(payload));
+    if (token) {
+      localStorage.setItem("qf_token", token);
+    }
+    if (user) {
+      localStorage.setItem("qf_user", JSON.stringify(user));
+    }
     dispatch({ type: "LOGIN_SUCCESS", payload });
   };
 
   const logout = () => {
     localStorage.removeItem("qf_auth");
+    localStorage.removeItem("qf_token");
+    localStorage.removeItem("qf_user");
     dispatch({ type: "LOGOUT" });
   };
 

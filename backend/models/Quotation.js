@@ -18,7 +18,7 @@ const quotationSchema = new mongoose.Schema(
     },
     customerEmail: {
       type: String,
-      required: [true, "Customer email is required"],
+      default: "",
       lowercase: true,
       trim: true,
     },

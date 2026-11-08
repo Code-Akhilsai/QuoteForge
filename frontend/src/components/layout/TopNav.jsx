@@ -1,12 +1,9 @@
-import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Avatar";
 import { NavIcon } from "@/components/ui/Icons";
 
 export default function TopNav() {
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -27,45 +24,13 @@ export default function TopNav() {
         </Link>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="small" className="px-3" aria-label="Notifications">
-            <NavIcon name="Bell" size={18} />
-          </Button>
-
-          <div className="relative group" onClick={() => setUserMenuOpen(!userMenuOpen)}>
-            <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors">
-              <Avatar src={undefined} alt={user?.name ?? "U"} className="size-7" />
-              <span className="hidden sm:block text-sm font-medium text-slate-900">{user?.name ?? "User"}</span>
-              <NavIcon name="ChevronDown" size={16} className="text-slate-400" />
-            </button>
-            {userMenuOpen && (
-              <div className="absolute right-0 mt-2 w-48 rounded-xl border border-slate-200 bg-white shadow-lg p-2 z-50 animate-in fade-in zoom-in duration-100">
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-2 px-3 py-2 text-sm text-slate-900 border-b border-slate-100 pb-1">
-                    <Avatar src={undefined} alt={user?.name ?? "U"} className="size-8" />
-                    <div>
-                      <div className="font-medium">{user?.name ?? "User"}</div>
-                      <div className="text-xs text-slate-500 capitalize">{user?.role ?? ""}</div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setUserMenuOpen(false)}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-md transition-colors"
-                  >
-                    <NavIcon name="User" size={16} /> Profile
-                  </button>
-                  <button
-                    onClick={() => setUserMenuOpen(false)}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-md transition-colors"
-                  >
-                    <NavIcon name="Settings" size={16} /> Settings
-                  </button>
-                  <button onClick={() => { logout(); navigate("/login"); }} className="flex w-full items-center gap-2 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 rounded-md transition-colors">
-                    <NavIcon name="LogOut" size={16} /> Sign out
-                  </button>
-                </div>
-              </div>
-            )}
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 transition-colors">
+            <Avatar src={undefined} alt={user?.name ?? "U"} className="size-7" />
+            <span className="hidden sm:block text-sm font-medium text-slate-900">{user?.name ?? "User"}</span>
           </div>
+          <button onClick={() => { logout(); navigate("/login"); }} className="flex items-center gap-2 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 rounded-md transition-colors">
+            <NavIcon name="LogOut" size={16} /> Sign out
+          </button>
         </div>
       </div>
     </header>

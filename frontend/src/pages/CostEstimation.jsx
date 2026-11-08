@@ -1,10 +1,12 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { Calculator, Plus, Trash2, Download, Printer, BarChart3, Truck, Package } from "lucide-react";
+import { useCallback, useState, useEffect } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { Calculator, Plus, Download, Printer, BarChart3, Truck, Package, Check, Sparkles } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { useLocation, useNavigate } from "react-router-dom";
+import axios from "@/api";
 
 const DEFAULT_OPERATION = {
   id: Date.now(),
@@ -17,14 +19,18 @@ const DEFAULT_OPERATION = {
 const OVERHEAD_DEFAULTS = {
   labourRatePerHour: 150,
   powerRatePerHour: 45,
-  scrapPercentage: 5,
-  profitMarginPercentage: 15,
+  scrapPercentage: 0,
+  profitMarginPercentage: 0,
 };
 
 export default function CostEstimation() {
-  const [operations, setOperations] = useState([{ ...DEFAULT_OPERATION, id: 1 }]);
-  const [materials] = useState([]);
-  const [machines] = useState([]);  const [materialSelection, setMaterialSelection] = useState("");
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [operations, setOperations] = useState([]);
+  const [materials, setMaterials] = useState([]);
+  const [machines, setMachines] = useState([]);
+  const [rfqs, setRfqs] = useState([]);
+  const [materialSelection, setMaterialSelection] = useState("");
   const [materialQty, setMaterialQty] = useState("");
   const [quantity, setQuantity] = useState("100");
   const [volume1, setVolume1] = useState("100");
@@ -32,36 +38,66 @@ export default function CostEstimation() {
   const [volume3, setVolume3] = useState("1000");
   const [scrapPct, setScrapPct] = useState(OVERHEAD_DEFAULTS.scrapPercentage.toString());
   const [profitMargin, setProfitMargin] = useState(OVERHEAD_DEFAULTS.profitMarginPercentage.toString());
+  const [savingQuotation, setSavingQuotation] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [rfqPrefillId, setRfqPrefillId] = useState(() => location.state?.rfqId || "");
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiError, setAiError] = useState("");
+  const [aiNote, setAiNote] = useState("");
 
-  const computeCosts = (vol) => {
-    const matCost = material ? (material.rate * parseFloat(materialQty || "0")) / vol : 0;
-    const machCost = operations.reduce((sum, op) => sum + op.ratePerHour * op.hours, 0) / vol;
-    const labourCost = (labourRate * totalHours) / vol;
-    const powerCost = (powerRate * totalHours) / vol;
-    const base = matCost + machCost + labourCost + powerCost;
-    const withScrap = base * (1 + parseFloat(scrapPct) / 100);
-    const withProfit = withScrap * (1 + parseFloat(profitMargin) / 100);
-    return {
-      material: matCost,
-      machining: machCost,
-      labour: labourCost,
-      power: powerCost,
-      base,
-      withScrap,
-      withProfit,
-      total: withProfit * vol,
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [rateRes, rfqRes] = await Promise.all([
+          axios.get("/rate-masters"),
+          axios.get("/rfqs"),
+        ]);
+        const rates = rateRes.data.rates || [];
+        setMaterials(rates.filter((r) => r.type === "material"));
+        setMachines(rates.filter((r) => r.type === "machine"));
+        setRfqs(rfqRes.data.rfqs || []);
+      } catch {
+        // ignore
+      }
     };
-  };
+    void fetchData();
+  }, []);
 
   const form = useForm({
     defaultValues: {
       customerName: "",
       productName: "",
       rfqId: "",
+      customerEmail: "",
     },
   });
+  const rfqIdValue = useWatch({ control: form.control, name: "rfqId" });
 
-  const material = materials.find((m) => m.id === materialSelection);
+  const onSelectRFQ = useCallback((rfqId) => {
+    const selected = rfqs.find((r) => (r._id || r.id) === rfqId || r.rfqNumber === rfqId);
+    if (selected) {
+      form.setValue("rfqId", selected._id || selected.id);
+      form.setValue("customerName", selected.customerName || "");
+      form.setValue("productName", selected.productName || "");
+      form.setValue("customerEmail", selected.customerEmail || "");
+      if (selected.quantity) {
+        setQuantity(selected.quantity.toString());
+      }
+    }
+  }, [rfqs, form]);
+
+  useEffect(() => {
+    if (!rfqPrefillId || rfqs.length === 0) return;
+    const id = rfqPrefillId;
+    // defer to avoid synchronous setState-in-effect lint; selecting an RFQ is an intentional prefill
+    const t = setTimeout(() => {
+      onSelectRFQ(id);
+      setRfqPrefillId("");
+    }, 0);
+    return () => clearTimeout(t);
+  }, [rfqPrefillId, rfqs, onSelectRFQ]);
+
+  const material = materials.find((m) => (m._id || m.id) === materialSelection);
 
   const materialCostPerUnit = material && materialQty
     ? (material.rate * parseFloat(materialQty)) / parseFloat(quantity || 1)
@@ -77,10 +113,91 @@ export default function CostEstimation() {
   const powerCostPerUnit = (powerRate * totalHours) / parseFloat(quantity || 1);
 
   const baseCostPerUnit = materialCostPerUnit + machiningCostPerUnit + labourCostPerUnit + powerCostPerUnit;
-  const scrapFactor = 1 + parseFloat(scrapPct) / 100;
+  const scrapFactor = 1 + parseFloat(scrapPct || 0) / 100;
   const costWithScrap = baseCostPerUnit * scrapFactor;
-  const profitFactor = 1 + parseFloat(profitMargin) / 100;
+  const profitFactor = 1 + parseFloat(profitMargin || 0) / 100;
   const sellingPricePerUnit = costWithScrap * profitFactor;
+
+  const computeCosts = (vol) => {
+    if (!vol || vol <= 0) return { withProfit: 0, total: 0 };
+    const matCost = material ? (material.rate * parseFloat(materialQty || "0")) / vol : 0;
+    const machCost = operations.reduce((sum, op) => sum + op.ratePerHour * op.hours, 0) / vol;
+    const labourCost = (labourRate * totalHours) / vol;
+    const powerCost = (powerRate * totalHours) / vol;
+    const base = matCost + machCost + labourCost + powerCost;
+    const withScrap = base * scrapFactor;
+    const withProfit = withScrap * profitFactor;
+    return {
+      material: matCost,
+      machining: machCost,
+      labour: labourCost,
+      power: powerCost,
+      base,
+      withScrap,
+      withProfit,
+      total: withProfit * vol,
+    };
+  };
+
+  const handleCreateQuotation = async () => {
+    const values = form.getValues();
+    const qty = parseFloat(quantity || 1);
+    const unitPrice = parseFloat(sellingPricePerUnit.toFixed(2));
+    const totalPrice = parseFloat((unitPrice * qty).toFixed(2));
+
+    setSavingQuotation(true);
+    try {
+      const res = await axios.post("/quotations", {
+        customerName: values.customerName || "Walk-in Customer",
+        customerEmail: values.customerEmail || "",
+        productName: values.productName || "Custom Part",
+        quantity: qty,
+        unitCost: unitPrice,
+        totalCost: totalPrice,
+        rfqId: values.rfqId || undefined,
+      });
+
+      if (res.status === 201 || res.status === 200) {
+        setSaveSuccess(true);
+        setTimeout(() => {
+          navigate("/quotation-history");
+        }, 800);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setSavingQuotation(false);
+    }
+  };
+
+  const suggestWithAI = async () => {
+    setAiBusy(true);
+    setAiError("");
+    try {
+      const values = form.getValues();
+      const res = await axios.post("/ai/costing-suggest", {
+        productName: values.productName,
+        customerName: values.customerName,
+        quantity: parseFloat(quantity || "0"),
+        volumes: [parseFloat(volume1 || "0"), parseFloat(volume2 || "0"), parseFloat(volume3 || "0")],
+        material: material ? { name: material.name, rate: material.rate, unit: material.unit } : null,
+        materialQty: parseFloat(materialQty || "0"),
+        operations: operations.map((op) => ({ machineName: op.machineName, ratePerHour: op.ratePerHour, hours: op.hours })),
+      });
+      const s = res.data?.suggestion || {};
+      if (s.scrapPercentage !== undefined) setScrapPct(String(s.scrapPercentage));
+      if (s.profitMarginPercentage !== undefined) setProfitMargin(String(s.profitMarginPercentage));
+      if (s.materialQty > 0) setMaterialQty(String(s.materialQty));
+      if (s.operationHours > 0 && operations.length === 1) {
+        updateOperation(operations[0].id, "hours", s.operationHours);
+      }
+      setAiNote(s.reasoning || "AI suggestions applied. Review before creating a quotation.");
+    } catch (e) {
+      setAiError(e?.response?.data?.message || "AI costing suggestion failed.");
+    } finally {
+      setAiBusy(false);
+    }
+  };
 
   const breakdown = [
     { label: "Material Cost", value: materialCostPerUnit, icon: Truck },
@@ -109,11 +226,16 @@ export default function CostEstimation() {
           <p className="section-subtitle">Add materials and machines via upload or manually to calculate costs</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="small">
+          {saveSuccess && (
+            <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded border border-emerald-100 flex items-center gap-1">
+              <Check className="size-3.5" /> Saved & Redirecting...
+            </span>
+          )}
+          <Button variant="outline" size="small" onClick={() => window.print()}>
             <Printer className="mr-2 size-4" /> Print Estimate
           </Button>
-          <Button>
-            <Download className="mr-2 size-4" /> Create Quotation
+          <Button onClick={handleCreateQuotation} disabled={savingQuotation}>
+            <Download className="mr-2 size-4" /> {savingQuotation ? "Saving..." : "Create Quotation"}
           </Button>
         </div>
       </div>
@@ -136,7 +258,22 @@ export default function CostEstimation() {
                   </div>
                   <div className="space-y-1">
                     <label className="label-field">RFQ Reference</label>
-                    <Input placeholder="e.g. RFQ-1001" {...form.register("rfqId")} />
+                    {rfqs.length > 0 ? (
+                      <select
+                        value={rfqIdValue || ""}
+                        className="w-full text-sm border border-slate-200 rounded-md bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        onChange={(e) => onSelectRFQ(e.target.value)}
+                      >
+                        <option value="">Select an existing RFQ or type below</option>
+                        {rfqs.map((r) => (
+                          <option key={r._id || r.id} value={r._id || r.id}>
+                            {r.rfqNumber} - {r.customerName} ({r.productName})
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <Input placeholder="e.g. RFQ-1001" {...form.register("rfqId")} />
+                    )}
                   </div>
                 </div>
                 <div className="space-y-1">
@@ -185,7 +322,7 @@ export default function CostEstimation() {
                 >
                   <option value="">Choose a material</option>
                   {materials.map((m) => (
-                    <option key={m.id} value={m.id}>
+                    <option key={m._id || m.id} value={m._id || m.id}>
                       {m.name} (₹{m.rate}/{m.unit})
                     </option>
                   ))}
@@ -231,40 +368,46 @@ export default function CostEstimation() {
                   <div className="col-span-1 text-right">Hours</div>
                   <div className="col-span-1 text-right">Cost</div>
                 </div>
-                {operations.map((op) => {
-                  const machine = machines.find((m) => m.id === op.machineId);
-                  const cost = (machine?.ratePerHour || 0) * op.hours;
-                  return (
-                    <div key={op.id} className="grid grid-cols-6 gap-2 items-center px-2 py-2 bg-slate-50 rounded border border-slate-100">
-                      <div className="col-span-3">
-                        <Select value={op.machineId} onValueChange={(v) => {
-                          const m = machines.find((mm) => mm.id === v);
-                          updateOperation(op.id, "machineId", v);
-                          updateOperation(op.id, "machineName", m?.name ?? "");
-                          updateOperation(op.id, "ratePerHour", m?.ratePerHour ?? 0);
-                        }} className="w-full px-1 py-1 text-sm">
-                          <option value="">Select machine</option>
-                          {machines.map((m) => (
-                            <option key={m.id} value={m.id}>{m.name}</option>
-                          ))}
-                        </Select>
-                        {machines.length === 0 && (
-                          <p className="text-xs text-slate-500">No machines available.</p>
-                        )}
+                {operations.length === 0 ? (
+                  <div className="p-4 text-center text-sm text-slate-500">
+                    No operations added. Click "Add Operation" to add a machining step.
+                  </div>
+                ) : (
+                  operations.map((op) => {
+                    const machine = machines.find((m) => (m._id || m.id) === op.machineId);
+                    const cost = ((machine?.rate || machine?.ratePerHour) || 0) * op.hours;
+                    return (
+                      <div key={op.id} className="grid grid-cols-6 gap-2 items-center px-2 py-2 bg-slate-50 rounded border border-slate-100">
+                        <div className="col-span-3">
+                          <Select value={op.machineId} onValueChange={(v) => {
+                            const m = machines.find((mm) => (mm._id || mm.id) === v);
+                            updateOperation(op.id, "machineId", v);
+                            updateOperation(op.id, "machineName", m?.name ?? "");
+                            updateOperation(op.id, "ratePerHour", m?.rate || m?.ratePerHour || 0);
+                          }} className="w-full px-1 py-1 text-sm">
+                            <option value="">Select machine</option>
+                            {machines.map((m) => (
+                              <option key={m._id || m.id} value={m._id || m.id}>{m.name}</option>
+                            ))}
+                          </Select>
+                          {machines.length === 0 && (
+                            <p className="text-xs text-slate-500">No machines available.</p>
+                          )}
+                        </div>
+                        <div className="col-span-1 text-right text-sm font-medium">{(machine?.rate || machine?.ratePerHour)?.toFixed(0) ?? "-"}</div>
+                        <div className="col-span-1 text-right">
+                          <Input type="number" value={op.hours.toString()} onChange={(e) => updateOperation(op.id, "hours", parseFloat(e.target.value) || 0)} className="h-8 px-1 text-sm text-right" />
+                        </div>
+                        <div className="col-span-1 text-right text-sm font-medium">₹{cost.toFixed(0)}</div>
+                        <div className="col-span-1 flex items-center">
+                          <Button size="small" variant="destructive" onClick={() => removeOperation(op.id)}>
+                            Remove
+                          </Button>
+                        </div>
                       </div>
-                      <div className="col-span-1 text-right text-sm font-medium">{machine?.ratePerHour?.toFixed(0) ?? "-"}</div>
-                      <div className="col-span-1 text-right">
-                        <Input type="number" value={op.hours.toString()} onChange={(e) => updateOperation(op.id, "hours", parseFloat(e.target.value) || 0)} className="h-8 px-1 text-sm text-right" />
-                      </div>
-                      <div className="col-span-1 text-right text-sm font-medium">₹{cost.toFixed(0)}</div>
-                      <div className="col-span-1 flex justify-end">
-                        <Button size="small" variant="ghost" className="p-1" title="Remove" onClick={() => removeOperation(op.id)}>
-                          <Trash2 className="size-3.5 text-rose-500" />
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
               </div>
             </CardContent>
           </Card>
@@ -328,10 +471,15 @@ export default function CostEstimation() {
           </Card>
 
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between gap-2">
               <CardTitle>Overhead Settings</CardTitle>
+              <Button type="button" size="small" variant="outline" onClick={suggestWithAI} disabled={aiBusy}>
+                <Sparkles className="mr-1.5 size-4" /> {aiBusy ? "Suggesting..." : "AI Suggest"}
+              </Button>
             </CardHeader>
             <CardContent className="space-y-4 pt-0">
+              {aiError && <p className="text-xs text-rose-600">{aiError}</p>}
+              {aiNote && <p className="text-xs text-slate-700 bg-indigo-50 border border-indigo-100 rounded p-2">{aiNote}</p>}
               <div className="space-y-1">
                 <label className="label-field">Scrap Percentage (%)</label>
                 <Input type="number" value={scrapPct} onChange={(e) => setScrapPct(e.target.value)} className="w-24" />
