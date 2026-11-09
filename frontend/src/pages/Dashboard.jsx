@@ -117,14 +117,14 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="page-header">
-        <div>
-          <h1 className="section-title">Dashboard</h1>
-          <p className="section-subtitle">
+      <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Dashboard</h1>
+          <p className="text-slate-500 mt-0.5 text-sm">
             Upload your RFQ data (CSV/Excel) to populate the dashboard
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <label className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-md cursor-pointer hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium">
             <Upload className="size-4" />
             <span>{uploadLoading ? "Uploading..." : "Upload Data"}</span>
@@ -204,10 +204,10 @@ export default function Dashboard() {
                 <RefreshCw className="mr-1 size-4" /> Refresh
               </Button>
             </CardHeader>
-            <CardContent>
+            <CardContent className="overflow-x-auto p-0 sm:p-6">
               <div className="-space-y-px">
                 <TableContainer>
-                  <Table>
+                  <Table className="min-w-[500px]">
                     <TableHeader>
                       <TableRow>
                         <TableHead>RFQ #</TableHead>

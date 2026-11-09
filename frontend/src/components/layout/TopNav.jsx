@@ -3,17 +3,19 @@ import { useAuth } from "@/hooks/useAuth";
 import { Avatar } from "@/components/ui/Avatar";
 import { NavIcon } from "@/components/ui/Icons";
 
-export default function TopNav() {
+export default function TopNav({ onOpenMobile }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 bg-white/80 backdrop-blur border-b border-slate-200 px-4">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 bg-white/90 backdrop-blur border-b border-slate-200 px-4 sm:px-6">
       <button
-        className="flex items-center p-2 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-md md:hidden transition-colors"
+        type="button"
+        onClick={onOpenMobile}
+        className="flex items-center p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-md md:hidden transition-colors"
         aria-label="Open menu"
       >
-        <NavIcon name="Menu" size={22} />
+        <NavIcon name="Menu" size={20} />
       </button>
 
       <div className="flex-1 flex items-center justify-end">

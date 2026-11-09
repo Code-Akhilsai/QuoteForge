@@ -151,7 +151,7 @@ export default function Approvals() {
             </select>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="overflow-x-auto p-0 sm:p-6">
           {loading ? (
             <div className="text-center py-12 text-sm text-slate-500">
               Loading quotations...
@@ -163,7 +163,7 @@ export default function Approvals() {
             </div>
           ) : (
             <TableContainer>
-              <Table>
+              <Table className="min-w-[700px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Quotation #</TableHead>

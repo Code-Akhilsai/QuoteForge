@@ -275,26 +275,38 @@ export default function CostEstimation() {
 
   return (
     <div className="space-y-6">
-      <div className="page-header">
-        <div>
-          <h1 className="section-title">Cost Estimation</h1>
-          <p className="section-subtitle">
+      <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Cost Estimation</h1>
+          <p className="text-slate-500 mt-0.5 text-sm">
             Add materials and machines via upload or manually to calculate costs
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           {saveSuccess && (
-            <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded border border-emerald-100 flex items-center gap-1">
+            <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded border border-emerald-100 flex items-center gap-1 w-full sm:w-auto justify-center">
               <Check className="size-3.5" /> Saved & Redirecting...
             </span>
           )}
-          <Button variant="outline" size="small" onClick={() => window.print()}>
-            <Printer className="mr-2 size-4" /> Print Estimate
-          </Button>
-          <Button onClick={handleCreateQuotation} disabled={savingQuotation}>
-            <Download className="mr-2 size-4" />{" "}
-            {savingQuotation ? "Saving..." : "Create Quotation"}
-          </Button>
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <Button
+              variant="outline"
+              size="small"
+              onClick={() => window.print()}
+              className="text-xs sm:text-sm py-1.5 px-3"
+            >
+              <Printer className="mr-1.5 size-3.5 sm:size-4 shrink-0" />
+              <span>Print Estimate</span>
+            </Button>
+            <Button
+              onClick={handleCreateQuotation}
+              disabled={savingQuotation}
+              className="text-xs sm:text-sm py-1.5 px-3"
+            >
+              <Download className="mr-1.5 size-3.5 sm:size-4 shrink-0" />
+              <span>{savingQuotation ? "Saving..." : "Create Quotation"}</span>
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -364,7 +376,7 @@ export default function CostEstimation() {
                 </div>
                 <div className="space-y-1">
                   <label className="label-field">Volume Pricing (units)</label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <div className="space-y-1">
                       <label className="text-xs text-slate-500">Volume 1</label>
                       <Input
@@ -470,8 +482,8 @@ export default function CostEstimation() {
               </Button>
             </CardHeader>
             <CardContent className="pt-0 space-y-3">
-              <div className="space-y-2">
-                <div className="grid grid-cols-6 gap-2 text-xs font-semibold text-slate-500 uppercase mb-1 px-1">
+              <div className="space-y-2 overflow-x-auto">
+                <div className="grid grid-cols-6 gap-2 text-xs font-semibold text-slate-500 uppercase mb-1 px-1 min-w-[600px]">
                   <div className="col-span-3">Machine</div>
                   <div className="col-span-1 text-right">Rate/hr</div>
                   <div className="col-span-1 text-right">Hours</div>
@@ -492,7 +504,7 @@ export default function CostEstimation() {
                     return (
                       <div
                         key={op.id}
-                        className="grid grid-cols-6 gap-2 items-center px-2 py-2 bg-slate-50 rounded border border-slate-100"
+                        className="grid grid-cols-6 gap-2 items-center px-2 py-2 bg-slate-50 rounded border border-slate-100 min-w-[600px]"
                       >
                         <div className="col-span-3">
                           <Select
@@ -614,7 +626,7 @@ export default function CostEstimation() {
                   <h4 className="text-xs font-semibold text-slate-500 uppercase mb-2">
                     Volume Pricing
                   </h4>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {[volume1, volume2, volume3].map((vol, i) => {
                       const c = computeCosts(parseFloat(vol || "0"));
                       return (
@@ -676,7 +688,7 @@ export default function CostEstimation() {
                   type="number"
                   value={scrapPct}
                   onChange={(e) => setScrapPct(e.target.value)}
-                  className="w-24"
+                  className="w-full sm:w-24"
                 />
               </div>
               <div className="space-y-1">
@@ -685,7 +697,7 @@ export default function CostEstimation() {
                   type="number"
                   value={profitMargin}
                   onChange={(e) => setProfitMargin(e.target.value)}
-                  className="w-24"
+                  className="w-full sm:w-24"
                 />
               </div>
               <div className="space-y-1">
@@ -694,7 +706,7 @@ export default function CostEstimation() {
                   type="number"
                   value={labourRate}
                   disabled
-                  className="w-24 bg-slate-100"
+                  className="w-full sm:w-24 bg-slate-100"
                 />
               </div>
               <div className="space-y-1">
@@ -703,7 +715,7 @@ export default function CostEstimation() {
                   type="number"
                   value={powerRate}
                   disabled
-                  className="w-24 bg-slate-100"
+                  className="w-full sm:w-24 bg-slate-100"
                 />
               </div>
             </CardContent>

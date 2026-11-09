@@ -194,7 +194,7 @@ export default function RateMasters() {
               </Button>
             )}
           </CardHeader>
-          <CardContent>
+          <CardContent className="overflow-x-auto p-0 sm:p-6">
             <div className="space-y-4">
               <form onSubmit={form.handleSubmit(saveMaterial)} className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
@@ -293,7 +293,7 @@ export default function RateMasters() {
               </Button>
             )}
           </CardHeader>
-          <CardContent>
+          <CardContent className="overflow-x-auto p-0 sm:p-6">
             <div className="space-y-4">
               <form onSubmit={form.handleSubmit(saveMachine)} className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">

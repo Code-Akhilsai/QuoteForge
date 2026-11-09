@@ -202,7 +202,7 @@ export default function QuotationHistory() {
             </select>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="overflow-x-auto p-0 sm:p-6">
           {filtered.length === 0 ? (
             <div className="text-center py-12 text-sm text-slate-500">
               No quotations found. Generate a quotation from Cost Estimation to
@@ -210,7 +210,7 @@ export default function QuotationHistory() {
             </div>
           ) : (
             <TableContainer>
-              <Table>
+              <Table className="min-w-[800px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Quotation #</TableHead>

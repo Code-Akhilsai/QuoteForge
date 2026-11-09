@@ -2,12 +2,22 @@ import { forwardRef } from "react";
 import { cn } from "@/utils/helpers";
 
 const TableContainer = ({ className, ...props }) => (
-  <div className={cn("rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden", className)} {...props} />
+  <div
+    className={cn(
+      "w-full rounded-xl border border-slate-200 bg-white shadow-sm overflow-x-auto",
+      className
+    )}
+    {...props}
+  />
 );
 TableContainer.displayName = "TableContainer";
 
 const Table = forwardRef(({ className, ...props }, ref) => (
-  <table ref={ref} className={cn("w-full text-sm caption-bottom", className)} {...props} />
+  <table
+    ref={ref}
+    className={cn("w-full min-w-[650px] text-sm caption-bottom", className)}
+    {...props}
+  />
 ));
 Table.displayName = "Table";
 

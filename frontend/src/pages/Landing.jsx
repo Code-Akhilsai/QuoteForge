@@ -90,32 +90,34 @@ export default function Landing() {
             <span className="font-semibold text-sm text-slate-800">Default Access Roles</span>
             <span className="text-xs text-slate-500 font-mono">Production Ready</span>
           </div>
-          <table className="w-full text-sm text-left">
-            <thead className="border-b border-slate-200 text-slate-500 font-medium bg-slate-50/50">
-              <tr>
-                <th className="px-6 py-3 font-semibold text-xs uppercase tracking-wider text-slate-500">Role</th>
-                <th className="px-6 py-3 font-semibold text-xs uppercase tracking-wider text-slate-500">Email</th>
-                <th className="px-6 py-3 font-semibold text-xs uppercase tracking-wider text-slate-500">Permissions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700">
-              <tr>
-                <td className="px-6 py-4 font-semibold text-slate-950">Estimator</td>
-                <td className="px-6 py-4 font-mono text-sm text-slate-600">estimator@quoteforge.in</td>
-                <td className="px-6 py-4 text-sm text-slate-600">RFQ Entry, Cost Estimation, Draft Quotations</td>
-              </tr>
-              <tr>
-                <td className="px-6 py-4 font-semibold text-slate-950">Sales Head</td>
-                <td className="px-6 py-4 font-mono text-sm text-slate-600">saleshead@quoteforge.in</td>
-                <td className="px-6 py-4 text-sm text-slate-600">Commercial Approvals, Rate Master Management, Pipeline</td>
-              </tr>
-              <tr>
-                <td className="px-6 py-4 font-semibold text-slate-950">System Admin</td>
-                <td className="px-6 py-4 font-mono text-sm text-slate-600">admin@quoteforge.in</td>
-                <td className="px-6 py-4 text-sm text-slate-600">Full System Access &amp; User Controls</td>
-              </tr>
-            </tbody>
-          </table>
+          <div className="overflow-x-auto w-full">
+            <table className="w-full min-w-[620px] text-sm text-left">
+              <thead className="border-b border-slate-200 text-slate-500 font-medium bg-slate-50/50">
+                <tr>
+                  <th className="px-6 py-3 font-semibold text-xs uppercase tracking-wider text-slate-500">Role</th>
+                  <th className="px-6 py-3 font-semibold text-xs uppercase tracking-wider text-slate-500">Email</th>
+                  <th className="px-6 py-3 font-semibold text-xs uppercase tracking-wider text-slate-500">Permissions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-slate-700">
+                <tr>
+                  <td className="px-6 py-4 font-semibold text-slate-950">Estimator</td>
+                  <td className="px-6 py-4 font-mono text-sm text-slate-600">estimator@quoteforge.in</td>
+                  <td className="px-6 py-4 text-sm text-slate-600">RFQ Entry, Cost Estimation, Draft Quotations</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-4 font-semibold text-slate-950">Sales Head</td>
+                  <td className="px-6 py-4 font-mono text-sm text-slate-600">saleshead@quoteforge.in</td>
+                  <td className="px-6 py-4 text-sm text-slate-600">Commercial Approvals, Rate Master Management, Pipeline</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-4 font-semibold text-slate-950">System Admin</td>
+                  <td className="px-6 py-4 font-mono text-sm text-slate-600">admin@quoteforge.in</td>
+                  <td className="px-6 py-4 text-sm text-slate-600">Full System Access &amp; User Controls</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </main>
 
