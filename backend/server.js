@@ -17,14 +17,25 @@ connectDB();
 
 const app = express();
 
-const allowedOrigin = process.env.CLIENT_URL || "http://localhost:5173";
+const allowedOrigins = (
+  process.env.CLIENT_URL || "http://localhost:5173"
+)
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
 
-app.use(
-  cors({
-    origin: allowedOrigin,
-    credentials: true,
-  })
-);
+const corsOptions = {
+  credentials: true,
+  origin(origin, cb) {
+    if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes("*")) {
+      cb(null, true);
+    } else {
+      cb(new Error(`CORS blocked for origin: ${origin}`));
+    }
+  },
+};
+
+app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use(cookieParser());
