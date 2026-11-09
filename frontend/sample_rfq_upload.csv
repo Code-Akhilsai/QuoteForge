@@ -1,5 +1,0 @@
-RFQ No,Customer,Customer Email,Customer Phone,Part,Part Name,Material,Annual Volume,Hour Rate ₹,Total Cost,Status,Deadline
-RFQ-1001,Precision Auto Components,procurement@precisionauto.in,+91 98765 43210,Brake Caliper Housing,Brake Caliper Housing,Aluminium 6061-T6,500,1200,600000,estimating,2026-12-15
-RFQ-1002,Elite Forgings Ltd,eliteforgings@eliteforgings.in,+91 98765 11111,Connecting Rod,Connecting Rod,Steel Forged,1000,850,850000,estimating,2026-12-20
-RFQ-1003,Mahindra Precision,mahindraprecision@mahindra.in,+91 98765 22222,Engine Block,Engine Block,Aluminium A380,2000,950,1900000,estimating,2026-12-30
-RFQ-1004,Tata Forge,tataforge@tata.in,+91 98765 33333,Gear Housing,Gear Housing,MS Plate,1500,700,1050000,estimating,2027-01-10
