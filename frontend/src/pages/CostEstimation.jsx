@@ -73,7 +73,9 @@ export default function CostEstimation() {
         setMachines(rates.filter((r) => r.type === "machine"));
         setRfqs(rfqRes.data.rfqs || []);
       } catch (e) {
-        setAiError(e?.response?.data?.message || "Failed to load rate masters.");
+        setAiError(
+          e?.response?.data?.message || "Failed to load rate masters.",
+        );
       }
     };
     void fetchData();
@@ -134,8 +136,7 @@ export default function CostEstimation() {
   const labourRate = OVERHEAD_DEFAULTS.labourRatePerHour;
   const powerRate = OVERHEAD_DEFAULTS.powerRatePerHour;
   const totalHours = operations.reduce((sum, op) => sum + op.hours, 0);
-  const labourCostPerUnit =
-    (labourRate * totalHours) / safeQty;
+  const labourCostPerUnit = (labourRate * totalHours) / safeQty;
   const powerCostPerUnit = (powerRate * totalHours) / safeQty;
 
   const baseCostPerUnit =
@@ -143,8 +144,7 @@ export default function CostEstimation() {
     machiningCostPerUnit +
     labourCostPerUnit +
     powerCostPerUnit;
-  const freightPerUnit =
-    parseFloat(freightCost || "0") / safeQty;
+  const freightPerUnit = parseFloat(freightCost || "0") / safeQty;
   const scrapFactor = 1 + parseFloat(scrapPct || 0) / 100;
   const costWithScrap = (baseCostPerUnit + freightPerUnit) * scrapFactor;
   const profitFactor = 1 + parseFloat(profitMargin || 0) / 100;
@@ -196,7 +196,9 @@ export default function CostEstimation() {
       return;
     }
     if (unitPrice <= 0) {
-      setAiError("Selling price is zero. Add a material and/or machining operations.");
+      setAiError(
+        "Selling price is zero. Add a material and/or machining operations.",
+      );
       return;
     }
 
@@ -288,13 +290,13 @@ export default function CostEstimation() {
 
   function updateOperation(id, field, value) {
     setOperations((prev) =>
-      prev.map((o) => (o.id === id ? { ...o, [field]: value } : o))
+      prev.map((o) => (o.id === id ? { ...o, [field]: value } : o)),
     );
   }
 
   function handleMachineChange(opId, selectedValue) {
     const matched = machines.find(
-      (m) => String(m._id || m.id) === String(selectedValue)
+      (m) => String(m._id || m.id) === String(selectedValue),
     );
     setOperations((prev) =>
       prev.map((o) =>
@@ -305,8 +307,8 @@ export default function CostEstimation() {
               machineName: matched?.name || "",
               ratePerHour: Number(matched?.rate ?? matched?.ratePerHour ?? 0),
             }
-          : o
-      )
+          : o,
+      ),
     );
   }
 
@@ -545,21 +547,26 @@ export default function CostEstimation() {
                     return (
                       <div
                         key={op.id}
-                        className="grid grid-cols-6 gap-2 items-center px-2 py-2 bg-slate-50 rounded border border-slate-100 min-w-[600px]"
+                        className="grid grid-cols-6 gap-2 items-center px-2 py-2 bg-slate-50 rounded border border-slate-100 min-w-150"
                       >
                         <div className="col-span-3 min-w-0">
                           <select
                             value={op.machineId || ""}
-                            onChange={(e) => handleMachineChange(op.id, e.target.value)}
+                            onChange={(e) =>
+                              handleMachineChange(op.id, e.target.value)
+                            }
                             className="w-full text-sm border border-slate-300 rounded-md bg-white px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer text-slate-900"
                           >
                             <option value="">Select machine</option>
                             {machines.map((m) => {
                               const val = String(m._id || m.id || "");
-                              const mRate = Number(m.rate || m.ratePerHour) || 0;
+                              const mRate =
+                                Number(m.rate || m.ratePerHour) || 0;
                               return (
                                 <option key={val} value={val}>
-                                  {m.name} (₹{mRate % 1 === 0 ? mRate : mRate.toFixed(2)}/hr)
+                                  {m.name} (₹
+                                  {mRate % 1 === 0 ? mRate : mRate.toFixed(2)}
+                                  /hr)
                                 </option>
                               );
                             })}
@@ -571,7 +578,11 @@ export default function CostEstimation() {
                           )}
                         </div>
                         <div className="col-span-1 text-right text-sm font-medium">
-                          {rate > 0 ? (rate % 1 === 0 ? `₹${rate}` : `₹${rate.toFixed(2)}`) : "-"}
+                          {rate > 0
+                            ? rate % 1 === 0
+                              ? `₹${rate}`
+                              : `₹${rate.toFixed(2)}`
+                            : "-"}
                         </div>
                         <div className="col-span-1 text-right">
                           <Input
