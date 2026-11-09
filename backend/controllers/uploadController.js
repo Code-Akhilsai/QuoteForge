@@ -2,8 +2,6 @@ import multer from "multer";
 import XLSX from "xlsx";
 import { RFQ } from "../models/RFQ.js";
 
-const storage = multer.memoryStorage();
-
 const parseFile = (buffer) => {
   const workbook = XLSX.read(buffer, { type: "buffer" });
   const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
