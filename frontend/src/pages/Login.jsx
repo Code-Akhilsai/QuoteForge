@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { ArrowRight, CheckCircle2, Shield, Building2, User } from "lucide-react";
+import { ArrowRight, CheckCircle2, Shield, Building2, User, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useAuth } from "@/hooks/useAuth";
@@ -13,6 +13,7 @@ export default function Login() {
   const { login } = useAuth();
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm({
     defaultValues: { email: "", password: "" },
@@ -143,12 +144,27 @@ export default function Login() {
               <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
                 Password
               </label>
-              <Input
-                type="password"
-                placeholder="••••••••"
-                {...form.register("password")}
-                required
-              />
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  {...form.register("password")}
+                  className="pr-10"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <EyeOff className="size-4" />
+                  ) : (
+                    <Eye className="size-4" />
+                  )}
+                </button>
+              </div>
             </div>
 
             {error && (
