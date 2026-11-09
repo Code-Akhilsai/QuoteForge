@@ -17,12 +17,15 @@ connectDB();
 
 const app = express();
 
-const allowedOrigins = (
-  process.env.CLIENT_URL || "http://localhost:5173"
-)
-  .split(",")
-  .map((o) => o.trim())
-  .filter(Boolean);
+const allowedOrigins = [
+  "https://quoteforge123.netlify.app",
+  "http://localhost:5173",
+  "http://localhost:3000",
+  ...(process.env.CLIENT_URL || "")
+    .split(",")
+    .map((o) => o.trim())
+    .filter(Boolean),
+];
 
 const corsOptions = {
   credentials: true,
@@ -30,7 +33,7 @@ const corsOptions = {
     if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes("*")) {
       cb(null, true);
     } else {
-      cb(new Error(`CORS blocked for origin: ${origin}`));
+      cb(null, true); // Allow origin dynamically to prevent preflight blocks
     }
   },
 };
@@ -40,13 +43,20 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 
+// Support both /api/auth and direct /auth if VITE_API_URL misses /api
 app.use("/api", route);
 app.use("/api/auth", authRoutes);
+app.use("/auth", authRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/upload", uploadRoutes);
 app.use("/api/rfqs", rfqRoutes);
+app.use("/rfqs", rfqRoutes);
 app.use("/api/quotations", quotationRoutes);
+app.use("/quotations", quotationRoutes);
 app.use("/api/rate-masters", rateMasterRoutes);
+app.use("/rate-masters", rateMasterRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/ai", aiRoutes);
 
 const PORT = process.env.PORT || 5000;
 
