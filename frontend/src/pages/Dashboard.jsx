@@ -119,13 +119,15 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Dashboard</h1>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+            Dashboard
+          </h1>
           <p className="text-slate-500 mt-0.5 text-sm">
             Upload your RFQ data (CSV/Excel) to populate the dashboard
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-md cursor-pointer hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium">
+          <label className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-md cursor-pointer hover:bg-slate-800 transition-colors disabled:opacity-50 text-sm font-medium">
             <Upload className="size-4" />
             <span>{uploadLoading ? "Uploading..." : "Upload Data"}</span>
             <input
@@ -207,7 +209,7 @@ export default function Dashboard() {
             <CardContent className="overflow-x-auto p-0 sm:p-6">
               <div className="-space-y-px">
                 <TableContainer>
-                  <Table className="min-w-[500px]">
+                  <Table className="min-w-125">
                     <TableHeader>
                       <TableRow>
                         <TableHead>RFQ #</TableHead>
@@ -288,7 +290,10 @@ export default function Dashboard() {
                           <span className="text-xs font-medium text-slate-500">
                             {q.rfqNumber}
                           </span>
-                          <Badge variant={STATUS_BADGE[q.status] ?? "info"} className="text-[10px]">
+                          <Badge
+                            variant={STATUS_BADGE[q.status] ?? "info"}
+                            className="text-[10px]"
+                          >
                             {STATUS_LABELS[q.status] ?? q.status}
                           </Badge>
                         </div>

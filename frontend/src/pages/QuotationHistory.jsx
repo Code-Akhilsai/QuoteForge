@@ -210,7 +210,7 @@ export default function QuotationHistory() {
             </div>
           ) : (
             <TableContainer>
-              <Table className="min-w-[800px]">
+              <Table className="min-w-200">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Quotation #</TableHead>

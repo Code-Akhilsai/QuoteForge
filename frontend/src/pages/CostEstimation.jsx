@@ -277,7 +277,9 @@ export default function CostEstimation() {
     <div className="space-y-6">
       <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Cost Estimation</h1>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+            Cost Estimation
+          </h1>
           <p className="text-slate-500 mt-0.5 text-sm">
             Add materials and machines via upload or manually to calculate costs
           </p>
@@ -444,7 +446,9 @@ export default function CostEstimation() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="label-field">Freight / Delivery Cost (₹)</label>
+                <label className="label-field">
+                  Freight / Delivery Cost (₹)
+                </label>
                 <Input
                   type="number"
                   value={freightCost}
@@ -483,7 +487,7 @@ export default function CostEstimation() {
             </CardHeader>
             <CardContent className="pt-0 space-y-3">
               <div className="space-y-2 overflow-x-auto">
-                <div className="grid grid-cols-6 gap-2 text-xs font-semibold text-slate-500 uppercase mb-1 px-1 min-w-[600px]">
+                <div className="grid grid-cols-6 gap-2 text-xs font-semibold text-slate-500 uppercase mb-1 px-1 min-w-150">
                   <div className="col-span-3">Machine</div>
                   <div className="col-span-1 text-right">Rate/hr</div>
                   <div className="col-span-1 text-right">Hours</div>
@@ -504,7 +508,7 @@ export default function CostEstimation() {
                     return (
                       <div
                         key={op.id}
-                        className="grid grid-cols-6 gap-2 items-center px-2 py-2 bg-slate-50 rounded border border-slate-100 min-w-[600px]"
+                        className="grid grid-cols-6 gap-2 items-center px-2 py-2 bg-slate-50 rounded border border-slate-100 min-w-150"
                       >
                         <div className="col-span-3">
                           <Select

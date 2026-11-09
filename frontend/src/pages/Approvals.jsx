@@ -163,7 +163,7 @@ export default function Approvals() {
             </div>
           ) : (
             <TableContainer>
-              <Table className="min-w-[700px]">
+              <Table className="min-w-175">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Quotation #</TableHead>

@@ -341,7 +341,7 @@ export default function RFQManagement() {
         <CardContent className="overflow-x-auto p-0 sm:p-6">
           <div className="-space-y-px">
             <TableContainer>
-              <Table className="min-w-[800px]">
+              <Table className="min-w-200">
                 <TableHeader>
                   <TableRow>
                     <TableHead>RFQ #</TableHead>
