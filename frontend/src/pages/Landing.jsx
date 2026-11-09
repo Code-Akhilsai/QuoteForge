@@ -2,138 +2,132 @@ import { Link } from "react-router-dom";
 
 export default function Landing() {
   return (
-    <div className="bg-white text-slate-900 min-h-screen">
-      <nav className="border-b border-slate-200 px-4 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded bg-indigo-600">
-              <svg className="h-3 w-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.334 0 2.832.477 3.5 1.253v13c-.668.776-2.166 1.253-3.5 1.253s-2.832-.477-3.5-1.253V18c-1.334 0-2.832-.477-3.5-1.253" />
-              </svg>
-            </div>
-            <span className="font-bold text-lg tracking-tight">Quote<span className="text-indigo-600">Forge</span></span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link to="/login" className="text-sm font-medium text-slate-600 hover:text-indigo-600">Log in</Link>
+    <div className="min-h-screen bg-slate-50/60 text-slate-900 flex flex-col justify-between">
+      {/* Top Navigation */}
+      <header className="border-b border-slate-200 bg-white">
+        <div className="max-w-6xl mx-auto px-6 h-18 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2.5">
+            <span className="w-8 h-8 rounded-md bg-slate-900 text-white font-bold text-sm flex items-center justify-center">
+              QF
+            </span>
+            <span className="font-bold text-lg tracking-tight text-slate-900">
+              QuoteForge
+            </span>
+          </Link>
+          <div className="flex items-center">
             <Link
               to="/login"
-              className="bg-indigo-600 text-white px-3 py-1.5 rounded text-sm font-medium hover:bg-indigo-700"
+              className="bg-slate-900 text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-slate-800 transition-colors shadow-sm"
             >
-              Get Started
+              Sign In
             </Link>
           </div>
         </div>
-      </nav>
+      </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
-        <section className="mb-16">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-8">
-            <div className="flex-1">
-              <span className="text-sm font-medium text-indigo-600 uppercase tracking-wider">Manufacturing Quotation</span>
-              <h1 className="text-3xl font-bold sm:text-4xl lg:text-5xl mt-2 leading-tight">
-                Accurate quotes for industrial manufacturing
-              </h1>
-              <p className="text-lg text-slate-600 mt-6 leading-relaxed max-w-xl">
-                QuoteForge helps estimators and sales heads calculate product costs, manage customer RFQs,
-                and generate professional PDF quotations — all from one desktop-first dashboard.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 mt-8">
-                <Link
-                  to="/login"
-                  className="bg-indigo-600 text-white px-5 py-3 rounded-md text-sm font-medium hover:bg-indigo-700"
-                >
-                  Log in
-                </Link>
-                <Link
-                  to="/login"
-                  className="border border-slate-300 text-slate-700 px-5 py-3 rounded-md text-sm font-medium hover:bg-slate-50"
-                >
-                  View features
-                </Link>
-              </div>
-            </div>
-            <div className="flex-1 hidden sm:block">
-              <div className="border border-slate-200 rounded-lg p-6 bg-slate-50">
-                <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wide mb-4">Core features</h3>
-                <ul className="text-sm text-slate-600 space-y-3 list-disc pl-5">
-                  <li>RFQ register with status and owners</li>
-                  <li>Cost estimation at 2–3 volumes</li>
-                  <li>Material and machine rate masters</li>
-                  <li>PDF quotation generation</li>
-                  <li>Approval workflow (₹25 lakh threshold)</li>
-                  <li>Excel/CSV quote import</li>
-                </ul>
-              </div>
+      {/* Main Container */}
+      <main className="max-w-6xl mx-auto px-6 py-20 flex-1 w-full">
+        {/* Hero Section */}
+        <div className="max-w-3xl mb-20">
+          <div className="inline-block px-3 py-1 rounded bg-slate-200/70 text-slate-700 text-xs font-semibold tracking-wider uppercase mb-5">
+            Manufacturing Cost Estimation &amp; Quoting
+          </div>
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-slate-950 leading-[1.15] mb-6">
+            Industrial costing without the spreadsheet chaos.
+          </h1>
+          <p className="text-lg sm:text-xl text-slate-600 leading-relaxed font-normal mb-8">
+            A purpose-built internal system for discrete manufacturers to compute material rates, machine hourly cycle times, and multi-tier quotations accurately and on time.
+          </p>
+          <div className="flex flex-wrap items-center gap-4">
+            <Link
+              to="/login"
+              className="bg-slate-900 text-white text-base font-medium px-6 py-3 rounded-md hover:bg-slate-800 transition-colors shadow-sm"
+            >
+              Sign In
+            </Link>
+            <span className="text-sm text-slate-500">
+              Access for Estimators, Sales Heads, and Admins
+            </span>
+          </div>
+        </div>
+
+        {/* 3 Structured Core Columns */}
+        <div className="border-t border-slate-200 pt-14 grid grid-cols-1 md:grid-cols-3 gap-10">
+          <div className="space-y-3">
+            <h2 className="text-lg font-semibold text-slate-950">1. RFQ Management</h2>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Consolidate customer requests from CSV or manual entry. Maintain clear visibility from draft through estimating and win/loss records.
+            </p>
+            <div className="text-xs font-medium text-slate-500 pt-1">
+              Supports CSV &amp; Excel import &bull; Status tracking
             </div>
           </div>
-        </section>
 
-        <section className="border-t border-b border-slate-200 py-12">
-          <div className="max-w-7xl mx-auto">
-            <div className="grid md:grid-cols-3 gap-8 mb-10">
-              <MetricCard label="Turnaround" value="4 days" sub="from 9 working days" />
-              <MetricCard label="Estimator time" value="1 hr / part" sub="from 2.5 hours" />
-              <MetricCard label="RFQs per month" value="60+" sub="5 parts each (typical)" />
+          <div className="space-y-3">
+            <h2 className="text-lg font-semibold text-slate-950">2. Cost Estimation</h2>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Model material requirements, CNC operations, labour, power, scrap percentages, and tiered volume pricing (100, 500, 1000 units).
+            </p>
+            <div className="text-xs font-medium text-slate-500 pt-1">
+              Live rate book &bull; Volume breakpoints &bull; Margin controls
             </div>
           </div>
-        </section>
 
-        <section className="mt-16">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-10">
-              <h2 className="text-xl font-bold text-slate-900 mb-3">Who uses QuoteForge</h2>
-            </div>
-            <div className="grid md:grid-cols-3 gap-6">
-              <RoleCard
-                name="Estimator"
-                desc="Create RFQs, run cost estimates, build quotes, manage material and machine rates."
-                items={["RFQ entry", "Cost estimation", "Rate masters", "Quote drafts"]}
-              />
-              <RoleCard
-                name="Sales Head"
-                desc="Review pipeline, approve quotes above ₹25 lakh, oversee sales operations."
-                items={["Quote review", "Approval threshold", "Pipeline oversight"]}
-              />
-              <RoleCard
-                name="Admin"
-                desc="Full system access: user management, rate configuration, system settings."
-                items={["Full access", "User management", "System settings"]}
-              />
+          <div className="space-y-3">
+            <h2 className="text-lg font-semibold text-slate-950">3. Approvals &amp; History</h2>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Review margins with built-in thresholds. High-value commitments (&gt; ₹25 Lakh) trigger automatic review before formal dispatch.
+            </p>
+            <div className="text-xs font-medium text-slate-500 pt-1">
+              Commercial sign-off &bull; Printable records
             </div>
           </div>
-        </section>
+        </div>
+
+        {/* Seeded Roles Table */}
+        <div className="mt-20 border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm">
+          <div className="bg-slate-100/70 px-6 py-3.5 border-b border-slate-200 flex justify-between items-center">
+            <span className="font-semibold text-sm text-slate-800">Default Access Roles</span>
+            <span className="text-xs text-slate-500 font-mono">Production Ready</span>
+          </div>
+          <table className="w-full text-sm text-left">
+            <thead className="border-b border-slate-200 text-slate-500 font-medium bg-slate-50/50">
+              <tr>
+                <th className="px-6 py-3 font-semibold text-xs uppercase tracking-wider text-slate-500">Role</th>
+                <th className="px-6 py-3 font-semibold text-xs uppercase tracking-wider text-slate-500">Email</th>
+                <th className="px-6 py-3 font-semibold text-xs uppercase tracking-wider text-slate-500">Permissions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-slate-700">
+              <tr>
+                <td className="px-6 py-4 font-semibold text-slate-950">Estimator</td>
+                <td className="px-6 py-4 font-mono text-sm text-slate-600">estimator@quoteforge.in</td>
+                <td className="px-6 py-4 text-sm text-slate-600">RFQ Entry, Cost Estimation, Draft Quotations</td>
+              </tr>
+              <tr>
+                <td className="px-6 py-4 font-semibold text-slate-950">Sales Head</td>
+                <td className="px-6 py-4 font-mono text-sm text-slate-600">saleshead@quoteforge.in</td>
+                <td className="px-6 py-4 text-sm text-slate-600">Commercial Approvals, Rate Master Management, Pipeline</td>
+              </tr>
+              <tr>
+                <td className="px-6 py-4 font-semibold text-slate-950">System Admin</td>
+                <td className="px-6 py-4 font-mono text-sm text-slate-600">admin@quoteforge.in</td>
+                <td className="px-6 py-4 text-sm text-slate-600">Full System Access &amp; User Controls</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </main>
 
-      <footer className="border-t border-slate-200 mt-12 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between text-xs text-slate-500">
-          <span>QuoteForge — Desktop-first manufacturing quotation platform</span>
-          <span>Estimator &amp; Sales Head roles</span>
+      {/* Footer */}
+      <footer className="border-t border-slate-200 bg-white py-8">
+        <div className="max-w-6xl mx-auto px-6 flex items-center justify-between text-sm text-slate-500">
+          <span>QuoteForge Manufacturing System &copy; {new Date().getFullYear()}</span>
+          <Link to="/login" className="text-slate-800 font-medium hover:underline">
+            Sign In &rarr;
+          </Link>
         </div>
       </footer>
-    </div>
-  );
-}
-
-function MetricCard({ label, value, sub }) {
-  return (
-    <div className="border border-slate-200 rounded-lg p-6 bg-white">
-      <p className="text-sm text-slate-500 uppercase tracking-wider mb-2">{label}</p>
-      <p className="text-2xl font-bold text-slate-900 mb-1">{value}</p>
-      <p className="text-xs text-slate-500">{sub}</p>
-    </div>
-  );
-}
-
-function RoleCard({ name, desc, items }) {
-  return (
-    <div className="border border-slate-200 rounded-lg p-6 bg-white hover:border-indigo-200 transition-colors">
-      <h3 className="text-sm font-semibold text-slate-900 mb-3">{name}</h3>
-      <p className="text-sm text-slate-600 mb-4 leading-relaxed">{desc}</p>
-      <ul className="text-xs text-slate-500 space-y-1 list-disc pl-4">
-        {items.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
     </div>
   );
 }

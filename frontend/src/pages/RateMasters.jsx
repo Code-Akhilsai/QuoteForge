@@ -11,7 +11,7 @@ import axios from "@/api";
 
 const CATEGORY_COLOR = {
   Ferrous: "bg-slate-100 text-slate-700",
-  "Non-Ferrous": "bg-indigo-50 text-indigo-700",
+  "Non-Ferrous": "bg-slate-100 text-slate-800",
   Machining: "bg-emerald-50 text-emerald-700",
   Finishing: "bg-amber-50 text-amber-700",
   Fabrication: "bg-rose-50 text-rose-700",

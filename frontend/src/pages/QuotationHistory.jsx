@@ -3,7 +3,15 @@ import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
-import { TableContainer, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
+import {
+  TableContainer,
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/Table";
 import { formatCurrency, formatDate } from "@/utils/helpers";
 import { useNavigate } from "react-router-dom";
 import { Sparkles, X } from "lucide-react";
@@ -39,10 +47,13 @@ export default function QuotationHistory() {
         if (cancelled) return;
         setQuotations(res.data.quotations || []);
       } catch (e) {
-        if (!cancelled) setError(e?.response?.data?.message || "Failed to load quotations.");
+        if (!cancelled)
+          setError(e?.response?.data?.message || "Failed to load quotations.");
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const setStatus = async (q, status) => {
@@ -54,7 +65,9 @@ export default function QuotationHistory() {
       await axios.patch(`/quotations/${id}/status`, { status });
       await load();
     } catch (e) {
-      setError(e?.response?.data?.message || `Failed to set status to ${status}.`);
+      setError(
+        e?.response?.data?.message || `Failed to set status to ${status}.`,
+      );
     } finally {
       setBusyId(null);
     }
@@ -78,7 +91,10 @@ export default function QuotationHistory() {
         validTill: q.validTill,
         createdAt: q.createdAt,
       });
-      setDraft({ quotationNumber: q.quotationNumber, ...(res.data?.draft || {}) });
+      setDraft({
+        quotationNumber: q.quotationNumber,
+        ...(res.data?.draft || {}),
+      });
     } catch (e) {
       setError(e?.response?.data?.message || "AI quotation draft failed.");
     } finally {
@@ -100,11 +116,18 @@ export default function QuotationHistory() {
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 page-header">
         <div>
           <h1 className="section-title">Quotation History</h1>
-          <p className="section-subtitle">View quotations and update status. Quotes above {formatCurrency(APPROVAL_THRESHOLD)} need Admin/Sales Head approval.</p>
+          <p className="section-subtitle">
+            View quotations and update status. Quotes above{" "}
+            {formatCurrency(APPROVAL_THRESHOLD)} need Admin/Sales Head approval.
+          </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="small" onClick={() => window.print()}>Print</Button>
-          <Button size="small" onClick={() => navigate("/cost-estimation")}>New Quotation</Button>
+          <Button variant="outline" size="small" onClick={() => window.print()}>
+            Print
+          </Button>
+          <Button size="small" onClick={() => navigate("/cost-estimation")}>
+            New Quotation
+          </Button>
         </div>
       </div>
       {error && <p className="text-sm text-rose-600">{error}</p>}
@@ -112,15 +135,45 @@ export default function QuotationHistory() {
         <Card>
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
             <div>
-              <h3 className="text-sm font-semibold text-slate-900">AI Draft — {draft.quotationNumber}</h3>
-              {draft.notes && <p className="text-xs text-slate-500">{draft.notes}</p>}
+              <h3 className="text-sm font-semibold text-slate-900">
+                AI Draft — {draft.quotationNumber}
+              </h3>
+              {draft.notes && (
+                <p className="text-xs text-slate-500">{draft.notes}</p>
+              )}
             </div>
-            <Button size="small" variant="ghost" onClick={() => setDraft(null)} title="Close"><X className="size-4" /></Button>
+            <Button
+              size="small"
+              variant="ghost"
+              onClick={() => setDraft(null)}
+              title="Close"
+            >
+              <X className="size-4" />
+            </Button>
           </CardHeader>
           <CardContent className="space-y-2">
-            {draft.subject && <p className="text-sm"><span className="font-medium">Subject:</span> {draft.subject}</p>}
-            <textarea readOnly value={draft.body || ""} rows={10} className="w-full text-sm border border-slate-200 rounded-md bg-slate-50 px-3 py-2" />
-            <Button size="small" variant="outline" onClick={() => navigator.clipboard?.writeText(`Subject: ${draft.subject || ""}\n\n${draft.body || ""}`)}>Copy Draft</Button>
+            {draft.subject && (
+              <p className="text-sm">
+                <span className="font-medium">Subject:</span> {draft.subject}
+              </p>
+            )}
+            <textarea
+              readOnly
+              value={draft.body || ""}
+              rows={10}
+              className="w-full text-sm border border-slate-200 rounded-md bg-slate-50 px-3 py-2"
+            />
+            <Button
+              size="small"
+              variant="outline"
+              onClick={() =>
+                navigator.clipboard?.writeText(
+                  `Subject: ${draft.subject || ""}\n\n${draft.body || ""}`,
+                )
+              }
+            >
+              Copy Draft
+            </Button>
           </CardContent>
         </Card>
       )}
@@ -139,7 +192,7 @@ export default function QuotationHistory() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="text-sm border border-slate-200 rounded-md bg-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="text-sm border border-slate-200 rounded-md bg-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-900"
             >
               <option value="all">All statuses</option>
               <option value="draft">Draft</option>
@@ -152,7 +205,8 @@ export default function QuotationHistory() {
         <CardContent>
           {filtered.length === 0 ? (
             <div className="text-center py-12 text-sm text-slate-500">
-              No quotations found. Generate a quotation from Cost Estimation to see it here.
+              No quotations found. Generate a quotation from Cost Estimation to
+              see it here.
             </div>
           ) : (
             <TableContainer>
@@ -173,33 +227,75 @@ export default function QuotationHistory() {
                 <TableBody>
                   {filtered.map((q) => {
                     const id = q._id || q.id;
-                    const actionable = q.status === "draft" || q.status === "sent";
+                    const actionable =
+                      q.status === "draft" || q.status === "sent";
                     return (
                       <TableRow key={id}>
                         <TableCell className="font-medium">
                           {q.quotationNumber}
-                          {(q.totalCost || 0) > APPROVAL_THRESHOLD && <div className="text-[11px] text-amber-700">Above ₹25L</div>}
+                          {(q.totalCost || 0) > APPROVAL_THRESHOLD && (
+                            <div className="text-[11px] text-amber-700">
+                              Above ₹25L
+                            </div>
+                          )}
                         </TableCell>
                         <TableCell>{q.customerName}</TableCell>
                         <TableCell>{q.productName}</TableCell>
-                        <TableCell className="text-right">{q.quantity}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(q.unitCost)}</TableCell>
-                        <TableCell className="text-right font-medium">{formatCurrency(q.totalCost)}</TableCell>
+                        <TableCell className="text-right">
+                          {q.quantity}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(q.unitCost)}
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          {formatCurrency(q.totalCost)}
+                        </TableCell>
                         <TableCell className="text-center">
-                          <Badge variant={q.status === "approved" ? "success" : q.status === "rejected" ? "danger" : "info"}>
+                          <Badge
+                            variant={
+                              q.status === "approved"
+                                ? "success"
+                                : q.status === "rejected"
+                                  ? "danger"
+                                  : "info"
+                            }
+                          >
                             {q.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-right text-xs text-slate-500">{q.createdAt ? formatDate(q.createdAt) : "—"}</TableCell>
+                        <TableCell className="text-right text-xs text-slate-500">
+                          {q.createdAt ? formatDate(q.createdAt) : "—"}
+                        </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
-                            <Button size="small" variant="ghost" onClick={() => draftWithAI(q)} disabled={draftBusyId === id} title="AI draft">
+                            <Button
+                              size="small"
+                              variant="ghost"
+                              onClick={() => draftWithAI(q)}
+                              disabled={draftBusyId === id}
+                              title="AI draft"
+                            >
                               <Sparkles className="size-4" />
                             </Button>
                             {actionable ? (
                               <>
-                                <Button size="small" variant="outline" onClick={() => setStatus(q, "approved")} disabled={busyId === id}>Approve</Button>
-                                <Button size="small" variant="ghost" className="text-rose-600" onClick={() => setStatus(q, "rejected")} disabled={busyId === id}>Reject</Button>
+                                <Button
+                                  size="small"
+                                  variant="outline"
+                                  onClick={() => setStatus(q, "approved")}
+                                  disabled={busyId === id}
+                                >
+                                  Approve
+                                </Button>
+                                <Button
+                                  size="small"
+                                  variant="ghost"
+                                  className="text-rose-600"
+                                  onClick={() => setStatus(q, "rejected")}
+                                  disabled={busyId === id}
+                                >
+                                  Reject
+                                </Button>
                               </>
                             ) : null}
                           </div>

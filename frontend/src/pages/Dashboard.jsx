@@ -1,9 +1,24 @@
 import { useEffect, useState } from "react";
-import { BarChart3, Clock, Mail, DollarSign, Upload, RefreshCw } from "lucide-react";
+import {
+  BarChart3,
+  Clock,
+  Mail,
+  Upload,
+  RefreshCw,
+  IndianRupee,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { StatCard } from "@/components/ui/StatCard";
 import { Badge } from "@/components/ui/Badge";
-import { TableContainer, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
+import {
+  TableContainer,
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/Table";
 import { Button } from "@/components/ui/Button";
 import { formatCurrency, formatDate, ROLES } from "@/utils/helpers";
 import { useAuth } from "@/hooks/useAuth";
@@ -54,9 +69,15 @@ export default function Dashboard() {
     formData.append("file", file);
 
     try {
-      const res = await axios.post("/upload", formData);
+      const res = await axios.post("/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       if (res.data.success) {
-        setUploadResult({ success: true, message: res.data.message, created: res.data.created });
+        setUploadResult({
+          success: true,
+          message: res.data.message,
+          created: res.data.created,
+        });
         const load2 = async () => {
           try {
             const res2 = await axios.get("/rfqs");
@@ -67,10 +88,16 @@ export default function Dashboard() {
         };
         void load2();
       } else {
-        setUploadResult({ success: false, message: res.data.message || "Upload failed" });
+        setUploadResult({
+          success: false,
+          message: res.data.message || "Upload failed",
+        });
       }
     } catch {
-      setUploadResult({ success: false, message: "Network error. Is the backend running on port 3000?" });
+      setUploadResult({
+        success: false,
+        message: "Network error. Is the backend running on port 3000?",
+      });
     } finally {
       setUploadLoading(false);
       e.target.value = "";
@@ -93,30 +120,65 @@ export default function Dashboard() {
       <div className="page-header">
         <div>
           <h1 className="section-title">Dashboard</h1>
-          <p className="section-subtitle">Upload your RFQ data (CSV/Excel) to populate the dashboard</p>
+          <p className="section-subtitle">
+            Upload your RFQ data (CSV/Excel) to populate the dashboard
+          </p>
         </div>
         <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg cursor-pointer hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+          <label className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-md cursor-pointer hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium">
             <Upload className="size-4" />
             <span>{uploadLoading ? "Uploading..." : "Upload Data"}</span>
-            <input type="file" accept=".csv,.json,.xlsx" className="hidden" onChange={handleUpload} disabled={uploadLoading} />
+            <input
+              type="file"
+              accept=".csv,.json,.xlsx"
+              className="hidden"
+              onChange={handleUpload}
+              disabled={uploadLoading}
+            />
           </label>
-            {uploadResult && (
-              <div className={`flex items-start gap-2 px-3 py-2 rounded-lg text-xs font-medium border max-w-xl ${uploadResult.success ? "bg-green-50 text-green-700 border-green-100" : "bg-rose-50 text-rose-700 border-rose-100"}`}>
-                <span>{uploadResult.success ? "✓" : "✕"} {uploadResult.message}</span>
-                {uploadResult.created?.errors?.length > 0 && (
-                  <span className="block text-rose-700 font-normal">First issue: row {uploadResult.created.errors[0].row} — {uploadResult.created.errors[0].error}</span>
-                )}
-              </div>
-            )}
+          {uploadResult && (
+            <div
+              className={`flex items-start gap-2 px-3 py-2 rounded-lg text-xs font-medium border max-w-xl ${uploadResult.success ? "bg-green-50 text-green-700 border-green-100" : "bg-rose-50 text-rose-700 border-rose-100"}`}
+            >
+              <span>
+                {uploadResult.success ? "✓" : "✕"} {uploadResult.message}
+              </span>
+              {uploadResult.created?.errors?.length > 0 && (
+                <span className="block text-rose-700 font-normal">
+                  First issue: row {uploadResult.created.errors[0].row} —{" "}
+                  {uploadResult.created.errors[0].error}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
       <div className="grid-stats">
-        <StatCard title="RFQs in Estimating" value={stats.openRFQs} subtitle="requests pending quote" icon={<BarChart3 className="size-5" />} />
-        <StatCard title="Total RFQs" value={stats.totalQuotes} subtitle="this month" icon={<Mail className="size-5" />} />
-        <StatCard title="Pending Approvals" value={stats.pendingApprovals} subtitle="awaiting review" icon={<Clock className="size-5" />} />
-        <StatCard title="Total Quote Value" value={formatCurrency(stats.totalValue).replace("₹", "").trim()} subtitle="quoted this month" icon={<DollarSign className="size-5" />} />
+        <StatCard
+          title="RFQs in Estimating"
+          value={stats.openRFQs}
+          subtitle="requests pending quote"
+          icon={<BarChart3 className="size-5" />}
+        />
+        <StatCard
+          title="Total RFQs"
+          value={stats.totalQuotes}
+          subtitle="this month"
+          icon={<Mail className="size-5" />}
+        />
+        <StatCard
+          title="Pending Approvals"
+          value={stats.pendingApprovals}
+          subtitle="awaiting review"
+          icon={<Clock className="size-5" />}
+        />
+        <StatCard
+          title="Total Quote Value"
+          value={formatCurrency(stats.totalValue)}
+          subtitle="quoted this month"
+          icon={<IndianRupee className="size-5" />}
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -149,29 +211,51 @@ export default function Dashboard() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>RFQ #</TableHead>
-                        <TableHead className="hidden lg:table-cell">Customer</TableHead>
-                        <TableHead className="text-right w-20">Amount</TableHead>
-                        <TableHead className="text-right w-20">Status</TableHead>
-                        <TableHead className="text-right w-16">Deadline</TableHead>
+                        <TableHead className="hidden lg:table-cell">
+                          Customer
+                        </TableHead>
+                        <TableHead className="text-right w-20">
+                          Amount
+                        </TableHead>
+                        <TableHead className="text-right w-20">
+                          Status
+                        </TableHead>
+                        <TableHead className="text-right w-16">
+                          Deadline
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {recentQuotes.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={5} className="text-center py-8 text-sm text-slate-500">
-                            No quotations found. Upload your data to see them here.
+                          <TableCell
+                            colSpan={5}
+                            className="text-center py-8 text-sm text-slate-500"
+                          >
+                            No quotations found. Upload your data to see them
+                            here.
                           </TableCell>
                         </TableRow>
                       ) : (
                         recentQuotes.map((q) => (
                           <TableRow key={q._id}>
-                            <TableCell className="font-medium">{q.rfqNumber}</TableCell>
-                            <TableCell className="hidden lg:table-cell">{q.customerName}</TableCell>
-                            <TableCell className="text-right font-medium">{formatCurrency(q.estimatedValue)}</TableCell>
-                            <TableCell className="text-right">
-                              <Badge variant={STATUS_BADGE[q.status] ?? "info"}>{STATUS_LABELS[q.status] ?? q.status}</Badge>
+                            <TableCell className="font-medium">
+                              {q.rfqNumber}
                             </TableCell>
-                            <TableCell className="text-right text-xs text-slate-500">{formatDate(q.deadline || "-")}</TableCell>
+                            <TableCell className="hidden lg:table-cell">
+                              {q.customerName}
+                            </TableCell>
+                            <TableCell className="text-right font-medium">
+                              {formatCurrency(q.estimatedValue)}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Badge variant={STATUS_BADGE[q.status] ?? "info"}>
+                                {STATUS_LABELS[q.status] ?? q.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right text-xs text-slate-500">
+                              {formatDate(q.deadline || "-")}
+                            </TableCell>
                           </TableRow>
                         ))
                       )}
@@ -187,9 +271,46 @@ export default function Dashboard() {
               <CardTitle>Recent Activities</CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
-              <div className="text-center py-12 text-sm text-slate-500">
-                Upload RFQ data to see recent activities here.
-              </div>
+              {recentQuotes.length === 0 ? (
+                <div className="text-center py-12 text-sm text-slate-500">
+                  No RFQs yet. Upload data or add an RFQ to see recent
+                  activities.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {recentQuotes.map((q) => (
+                    <div
+                      key={q._id}
+                      className="flex items-center justify-between gap-3 p-3 rounded-lg border border-slate-100 bg-slate-50"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-slate-500">
+                            {q.rfqNumber}
+                          </span>
+                          <Badge variant={STATUS_BADGE[q.status] ?? "info"} className="text-[10px]">
+                            {STATUS_LABELS[q.status] ?? q.status}
+                          </Badge>
+                        </div>
+                        <p className="text-sm font-medium text-slate-900 truncate">
+                          {q.customerName}
+                        </p>
+                        <p className="text-xs text-slate-500 truncate">
+                          {q.productName}
+                        </p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-sm font-semibold text-slate-900">
+                          {formatCurrency(q.estimatedValue)}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          {formatDate(q.createdAt || q.deadline || "-")}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -201,24 +322,45 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="pt-0">
               <div className="space-y-3">
-                {recentQuotes.filter((q) => q.status === "sent").map((q) => (
-                  <Card key={q._id} className="p-3 border-none bg-transparent shadow-none hover:bg-indigo-50/50 transition-colors group cursor-pointer">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-medium text-slate-500">{q.rfqNumber}</span>
-                      <Badge variant="warning">{q.status}</Badge>
-                    </div>
-                    <p className="text-sm font-medium text-slate-900 mb-1">{q.customerName}</p>
-                    <p className="text-xs text-slate-500 mb-3">{q.productName}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold">{formatCurrency(q.estimatedValue)}</span>
-                      <Button size="small" variant="outline" className="h-8 px-2" onClick={() => window.location.href = "/rfq"}>
-                        Review
-                      </Button>
-                    </div>
-                  </Card>
-                ))}
-                {recentQuotes.filter((q) => q.status === "sent").length === 0 && (
-                  <div className="text-center py-4 text-sm text-slate-500">No pending approvals</div>
+                {recentQuotes
+                  .filter((q) => q.status === "sent")
+                  .map((q) => (
+                    <Card
+                      key={q._id}
+                      className="p-3 border-none bg-transparent shadow-none hover:bg-slate-100/70 transition-colors group cursor-pointer"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-medium text-slate-500">
+                          {q.rfqNumber}
+                        </span>
+                        <Badge variant="warning">{q.status}</Badge>
+                      </div>
+                      <p className="text-sm font-medium text-slate-900 mb-1">
+                        {q.customerName}
+                      </p>
+                      <p className="text-xs text-slate-500 mb-3">
+                        {q.productName}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold">
+                          {formatCurrency(q.estimatedValue)}
+                        </span>
+                        <Button
+                          size="small"
+                          variant="outline"
+                          className="h-8 px-2"
+                          onClick={() => (window.location.href = "/rfq")}
+                        >
+                          Review
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                {recentQuotes.filter((q) => q.status === "sent").length ===
+                  0 && (
+                  <div className="text-center py-4 text-sm text-slate-500">
+                    No pending approvals
+                  </div>
                 )}
               </div>
             </CardContent>
@@ -227,8 +369,12 @@ export default function Dashboard() {
           <Card className="p-4">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-sm font-semibold text-slate-900">Role Access</h3>
-                <p className="text-xs text-slate-500">Logged in as {user?.name}</p>
+                <h3 className="text-sm font-semibold text-slate-900">
+                  Role Access
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Logged in as {user?.name}
+                </p>
               </div>
               <Badge variant="info">{user?.role}</Badge>
             </div>
@@ -239,11 +385,19 @@ export default function Dashboard() {
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-slate-600">Rate Masters</span>
-                <Badge variant={isRole(ROLES.SALES_HEAD) ? "success" : "danger"}>{isRole(ROLES.SALES_HEAD) ? "Access" : "Restricted"}</Badge>
+                <Badge
+                  variant={isRole(ROLES.SALES_HEAD) ? "success" : "danger"}
+                >
+                  {isRole(ROLES.SALES_HEAD) ? "Access" : "Restricted"}
+                </Badge>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-slate-600">Approvals</span>
-                <Badge variant={isRole(ROLES.SALES_HEAD) ? "success" : "danger"}>{isRole(ROLES.SALES_HEAD) ? "Access" : "Restricted"}</Badge>
+                <Badge
+                  variant={isRole(ROLES.SALES_HEAD) ? "success" : "danger"}
+                >
+                  {isRole(ROLES.SALES_HEAD) ? "Access" : "Restricted"}
+                </Badge>
               </div>
             </div>
           </Card>

@@ -1,6 +1,16 @@
 import { useCallback, useState, useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { Calculator, Plus, Download, Printer, BarChart3, Truck, Package, Check, Sparkles } from "lucide-react";
+import {
+  Calculator,
+  Plus,
+  Download,
+  Printer,
+  BarChart3,
+  Truck,
+  Package,
+  Check,
+  Sparkles,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -36,11 +46,18 @@ export default function CostEstimation() {
   const [volume1, setVolume1] = useState("100");
   const [volume2, setVolume2] = useState("500");
   const [volume3, setVolume3] = useState("1000");
-  const [scrapPct, setScrapPct] = useState(OVERHEAD_DEFAULTS.scrapPercentage.toString());
-  const [profitMargin, setProfitMargin] = useState(OVERHEAD_DEFAULTS.profitMarginPercentage.toString());
+  const [scrapPct, setScrapPct] = useState(
+    OVERHEAD_DEFAULTS.scrapPercentage.toString(),
+  );
+  const [profitMargin, setProfitMargin] = useState(
+    OVERHEAD_DEFAULTS.profitMarginPercentage.toString(),
+  );
   const [savingQuotation, setSavingQuotation] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [rfqPrefillId, setRfqPrefillId] = useState(() => location.state?.rfqId || "");
+  const [rfqPrefillId, setRfqPrefillId] = useState(
+    () => location.state?.rfqId || "",
+  );
+  const [freightCost, setFreightCost] = useState("0");
   const [aiBusy, setAiBusy] = useState(false);
   const [aiError, setAiError] = useState("");
   const [aiNote, setAiNote] = useState("");
@@ -73,18 +90,23 @@ export default function CostEstimation() {
   });
   const rfqIdValue = useWatch({ control: form.control, name: "rfqId" });
 
-  const onSelectRFQ = useCallback((rfqId) => {
-    const selected = rfqs.find((r) => (r._id || r.id) === rfqId || r.rfqNumber === rfqId);
-    if (selected) {
-      form.setValue("rfqId", selected._id || selected.id);
-      form.setValue("customerName", selected.customerName || "");
-      form.setValue("productName", selected.productName || "");
-      form.setValue("customerEmail", selected.customerEmail || "");
-      if (selected.quantity) {
-        setQuantity(selected.quantity.toString());
+  const onSelectRFQ = useCallback(
+    (rfqId) => {
+      const selected = rfqs.find(
+        (r) => (r._id || r.id) === rfqId || r.rfqNumber === rfqId,
+      );
+      if (selected) {
+        form.setValue("rfqId", selected._id || selected.id);
+        form.setValue("customerName", selected.customerName || "");
+        form.setValue("productName", selected.productName || "");
+        form.setValue("customerEmail", selected.customerEmail || "");
+        if (selected.quantity) {
+          setQuantity(selected.quantity.toString());
+        }
       }
-    }
-  }, [rfqs, form]);
+    },
+    [rfqs, form],
+  );
 
   useEffect(() => {
     if (!rfqPrefillId || rfqs.length === 0) return;
@@ -99,39 +121,53 @@ export default function CostEstimation() {
 
   const material = materials.find((m) => (m._id || m.id) === materialSelection);
 
-  const materialCostPerUnit = material && materialQty
-    ? (material.rate * parseFloat(materialQty)) / parseFloat(quantity || 1)
-    : 0;
+  const materialCostPerUnit =
+    material && materialQty
+      ? (material.rate * parseFloat(materialQty)) / parseFloat(quantity || 1)
+      : 0;
 
   const machiningCostPerUnit =
-    operations.reduce((sum, op) => sum + op.ratePerHour * op.hours, 0) / parseFloat(quantity || 1);
+    operations.reduce((sum, op) => sum + op.ratePerHour * op.hours, 0) /
+    parseFloat(quantity || 1);
 
   const labourRate = OVERHEAD_DEFAULTS.labourRatePerHour;
   const powerRate = OVERHEAD_DEFAULTS.powerRatePerHour;
   const totalHours = operations.reduce((sum, op) => sum + op.hours, 0);
-  const labourCostPerUnit = (labourRate * totalHours) / parseFloat(quantity || 1);
+  const labourCostPerUnit =
+    (labourRate * totalHours) / parseFloat(quantity || 1);
   const powerCostPerUnit = (powerRate * totalHours) / parseFloat(quantity || 1);
 
-  const baseCostPerUnit = materialCostPerUnit + machiningCostPerUnit + labourCostPerUnit + powerCostPerUnit;
+  const baseCostPerUnit =
+    materialCostPerUnit +
+    machiningCostPerUnit +
+    labourCostPerUnit +
+    powerCostPerUnit;
+  const freightPerUnit =
+    parseFloat(freightCost || "0") / parseFloat(quantity || 1);
   const scrapFactor = 1 + parseFloat(scrapPct || 0) / 100;
-  const costWithScrap = baseCostPerUnit * scrapFactor;
+  const costWithScrap = (baseCostPerUnit + freightPerUnit) * scrapFactor;
   const profitFactor = 1 + parseFloat(profitMargin || 0) / 100;
   const sellingPricePerUnit = costWithScrap * profitFactor;
 
   const computeCosts = (vol) => {
     if (!vol || vol <= 0) return { withProfit: 0, total: 0 };
-    const matCost = material ? (material.rate * parseFloat(materialQty || "0")) / vol : 0;
-    const machCost = operations.reduce((sum, op) => sum + op.ratePerHour * op.hours, 0) / vol;
+    const matCost = material
+      ? (material.rate * parseFloat(materialQty || "0")) / vol
+      : 0;
+    const machCost =
+      operations.reduce((sum, op) => sum + op.ratePerHour * op.hours, 0) / vol;
     const labourCost = (labourRate * totalHours) / vol;
     const powerCost = (powerRate * totalHours) / vol;
     const base = matCost + machCost + labourCost + powerCost;
-    const withScrap = base * scrapFactor;
+    const freightPerVol = parseFloat(freightCost || "0") / vol;
+    const withScrap = (base + freightPerVol) * scrapFactor;
     const withProfit = withScrap * profitFactor;
     return {
       material: matCost,
       machining: machCost,
       labour: labourCost,
       power: powerCost,
+      freight: freightPerVol,
       base,
       withScrap,
       withProfit,
@@ -155,6 +191,7 @@ export default function CostEstimation() {
         unitCost: unitPrice,
         totalCost: totalPrice,
         rfqId: values.rfqId || undefined,
+        freightCost: parseFloat(freightCost || "0"),
       });
 
       if (res.status === 201 || res.status === 200) {
@@ -179,19 +216,34 @@ export default function CostEstimation() {
         productName: values.productName,
         customerName: values.customerName,
         quantity: parseFloat(quantity || "0"),
-        volumes: [parseFloat(volume1 || "0"), parseFloat(volume2 || "0"), parseFloat(volume3 || "0")],
-        material: material ? { name: material.name, rate: material.rate, unit: material.unit } : null,
+        volumes: [
+          parseFloat(volume1 || "0"),
+          parseFloat(volume2 || "0"),
+          parseFloat(volume3 || "0"),
+        ],
+        material: material
+          ? { name: material.name, rate: material.rate, unit: material.unit }
+          : null,
         materialQty: parseFloat(materialQty || "0"),
-        operations: operations.map((op) => ({ machineName: op.machineName, ratePerHour: op.ratePerHour, hours: op.hours })),
+        operations: operations.map((op) => ({
+          machineName: op.machineName,
+          ratePerHour: op.ratePerHour,
+          hours: op.hours,
+        })),
       });
       const s = res.data?.suggestion || {};
-      if (s.scrapPercentage !== undefined) setScrapPct(String(s.scrapPercentage));
-      if (s.profitMarginPercentage !== undefined) setProfitMargin(String(s.profitMarginPercentage));
+      if (s.scrapPercentage !== undefined)
+        setScrapPct(String(s.scrapPercentage));
+      if (s.profitMarginPercentage !== undefined)
+        setProfitMargin(String(s.profitMarginPercentage));
       if (s.materialQty > 0) setMaterialQty(String(s.materialQty));
       if (s.operationHours > 0 && operations.length === 1) {
         updateOperation(operations[0].id, "hours", s.operationHours);
       }
-      setAiNote(s.reasoning || "AI suggestions applied. Review before creating a quotation.");
+      setAiNote(
+        s.reasoning ||
+          "AI suggestions applied. Review before creating a quotation.",
+      );
     } catch (e) {
       setAiError(e?.response?.data?.message || "AI costing suggestion failed.");
     } finally {
@@ -204,6 +256,7 @@ export default function CostEstimation() {
     { label: "Machining Cost", value: machiningCostPerUnit, icon: Package },
     { label: "Labour Cost", value: labourCostPerUnit, icon: BarChart3 },
     { label: "Power & Overhead", value: powerCostPerUnit, icon: Package },
+    { label: "Freight / Delivery", value: freightPerUnit, icon: Truck },
   ];
 
   function addOperation() {
@@ -215,7 +268,9 @@ export default function CostEstimation() {
   }
 
   function updateOperation(id, field, value) {
-    setOperations(operations.map((o) => (o.id === id ? { ...o, [field]: value } : o)));
+    setOperations(
+      operations.map((o) => (o.id === id ? { ...o, [field]: value } : o)),
+    );
   }
 
   return (
@@ -223,7 +278,9 @@ export default function CostEstimation() {
       <div className="page-header">
         <div>
           <h1 className="section-title">Cost Estimation</h1>
-          <p className="section-subtitle">Add materials and machines via upload or manually to calculate costs</p>
+          <p className="section-subtitle">
+            Add materials and machines via upload or manually to calculate costs
+          </p>
         </div>
         <div className="flex items-center gap-2">
           {saveSuccess && (
@@ -235,7 +292,8 @@ export default function CostEstimation() {
             <Printer className="mr-2 size-4" /> Print Estimate
           </Button>
           <Button onClick={handleCreateQuotation} disabled={savingQuotation}>
-            <Download className="mr-2 size-4" /> {savingQuotation ? "Saving..." : "Create Quotation"}
+            <Download className="mr-2 size-4" />{" "}
+            {savingQuotation ? "Saving..." : "Create Quotation"}
           </Button>
         </div>
       </div>
@@ -250,21 +308,29 @@ export default function CostEstimation() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <form onSubmit={form.handleSubmit(() => {})} className="space-y-4">
+              <form
+                onSubmit={form.handleSubmit(() => {})}
+                className="space-y-4"
+              >
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="label-field">Customer Name</label>
-                    <Input placeholder="Customer name" {...form.register("customerName")} />
+                    <Input
+                      placeholder="Customer name"
+                      {...form.register("customerName")}
+                    />
                   </div>
                   <div className="space-y-1">
                     <label className="label-field">RFQ Reference</label>
                     {rfqs.length > 0 ? (
                       <select
                         value={rfqIdValue || ""}
-                        className="w-full text-sm border border-slate-200 rounded-md bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full text-sm border border-slate-200 rounded-md bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-900"
                         onChange={(e) => onSelectRFQ(e.target.value)}
                       >
-                        <option value="">Select an existing RFQ or type below</option>
+                        <option value="">
+                          Select an existing RFQ or type below
+                        </option>
                         {rfqs.map((r) => (
                           <option key={r._id || r.id} value={r._id || r.id}>
                             {r.rfqNumber} - {r.customerName} ({r.productName})
@@ -272,32 +338,56 @@ export default function CostEstimation() {
                         ))}
                       </select>
                     ) : (
-                      <Input placeholder="e.g. RFQ-1001" {...form.register("rfqId")} />
+                      <Input
+                        placeholder="e.g. RFQ-1001"
+                        {...form.register("rfqId")}
+                      />
                     )}
                   </div>
                 </div>
                 <div className="space-y-1">
                   <label className="label-field">Product Name</label>
-                  <Input placeholder="e.g. Brake Caliper Housing" {...form.register("productName")} required />
+                  <Input
+                    placeholder="e.g. Brake Caliper Housing"
+                    {...form.register("productName")}
+                    required
+                  />
                 </div>
                 <div className="space-y-1">
                   <label className="label-field">Order Quantity (units)</label>
-                    <Input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} required />
+                  <Input
+                    type="number"
+                    value={quantity}
+                    onChange={(e) => setQuantity(e.target.value)}
+                    required
+                  />
                 </div>
                 <div className="space-y-1">
                   <label className="label-field">Volume Pricing (units)</label>
                   <div className="grid grid-cols-3 gap-2">
                     <div className="space-y-1">
                       <label className="text-xs text-slate-500">Volume 1</label>
-                      <Input type="number" value={volume1} onChange={(e) => setVolume1(e.target.value)} />
+                      <Input
+                        type="number"
+                        value={volume1}
+                        onChange={(e) => setVolume1(e.target.value)}
+                      />
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs text-slate-500">Volume 2</label>
-                      <Input type="number" value={volume2} onChange={(e) => setVolume2(e.target.value)} />
+                      <Input
+                        type="number"
+                        value={volume2}
+                        onChange={(e) => setVolume2(e.target.value)}
+                      />
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs text-slate-500">Volume 3</label>
-                      <Input type="number" value={volume3} onChange={(e) => setVolume3(e.target.value)} />
+                      <Input
+                        type="number"
+                        value={volume3}
+                        onChange={(e) => setVolume3(e.target.value)}
+                      />
                     </div>
                   </div>
                 </div>
@@ -328,22 +418,41 @@ export default function CostEstimation() {
                   ))}
                 </Select>
                 {materials.length === 0 && (
-                  <p className="text-xs text-slate-500">No materials available. Add via Rate Masters or upload data.</p>
+                  <p className="text-xs text-slate-500">
+                    No materials available. Add via Rate Masters or upload data.
+                  </p>
                 )}
               </div>
               <div className="space-y-1">
                 <label className="label-field">Material Required (kg)</label>
-                <Input type="number" value={materialQty} onChange={(e) => setMaterialQty(e.target.value)} />
+                <Input
+                  type="number"
+                  value={materialQty}
+                  onChange={(e) => setMaterialQty(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="label-field">Freight / Delivery Cost (₹)</label>
+                <Input
+                  type="number"
+                  value={freightCost}
+                  onChange={(e) => setFreightCost(e.target.value)}
+                  placeholder="Total freight for the order"
+                />
               </div>
               {material && (
                 <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-500">Material Rate</span>
-                    <span className="font-medium text-slate-900">₹{material.rate} / {material.unit}</span>
+                    <span className="font-medium text-slate-900">
+                      ₹{material.rate} / {material.unit}
+                    </span>
                   </div>
                   <div className="flex justify-between text-sm mt-1">
                     <span className="text-slate-500">Material Cost / Unit</span>
-                    <span className="font-semibold text-indigo-600">₹{materialCostPerUnit.toFixed(2)}</span>
+                    <span className="font-semibold text-slate-900">
+                      ₹{materialCostPerUnit.toFixed(2)}
+                    </span>
                   </div>
                 </div>
               )}
@@ -370,37 +479,83 @@ export default function CostEstimation() {
                 </div>
                 {operations.length === 0 ? (
                   <div className="p-4 text-center text-sm text-slate-500">
-                    No operations added. Click "Add Operation" to add a machining step.
+                    No operations added. Click "Add Operation" to add a
+                    machining step.
                   </div>
                 ) : (
                   operations.map((op) => {
-                    const machine = machines.find((m) => (m._id || m.id) === op.machineId);
-                    const cost = ((machine?.rate || machine?.ratePerHour) || 0) * op.hours;
+                    const machine = machines.find(
+                      (m) => (m._id || m.id) === op.machineId,
+                    );
+                    const cost =
+                      (machine?.rate || machine?.ratePerHour || 0) * op.hours;
                     return (
-                      <div key={op.id} className="grid grid-cols-6 gap-2 items-center px-2 py-2 bg-slate-50 rounded border border-slate-100">
+                      <div
+                        key={op.id}
+                        className="grid grid-cols-6 gap-2 items-center px-2 py-2 bg-slate-50 rounded border border-slate-100"
+                      >
                         <div className="col-span-3">
-                          <Select value={op.machineId} onValueChange={(v) => {
-                            const m = machines.find((mm) => (mm._id || mm.id) === v);
-                            updateOperation(op.id, "machineId", v);
-                            updateOperation(op.id, "machineName", m?.name ?? "");
-                            updateOperation(op.id, "ratePerHour", m?.rate || m?.ratePerHour || 0);
-                          }} className="w-full px-1 py-1 text-sm">
+                          <Select
+                            value={op.machineId}
+                            onValueChange={(v) => {
+                              const m = machines.find(
+                                (mm) => (mm._id || mm.id) === v,
+                              );
+                              updateOperation(op.id, "machineId", v);
+                              updateOperation(
+                                op.id,
+                                "machineName",
+                                m?.name ?? "",
+                              );
+                              updateOperation(
+                                op.id,
+                                "ratePerHour",
+                                m?.rate || m?.ratePerHour || 0,
+                              );
+                            }}
+                            className="w-full px-1 py-1 text-sm"
+                          >
                             <option value="">Select machine</option>
                             {machines.map((m) => (
-                              <option key={m._id || m.id} value={m._id || m.id}>{m.name}</option>
+                              <option key={m._id || m.id} value={m._id || m.id}>
+                                {m.name}
+                              </option>
                             ))}
                           </Select>
                           {machines.length === 0 && (
-                            <p className="text-xs text-slate-500">No machines available.</p>
+                            <p className="text-xs text-slate-500">
+                              No machines available.
+                            </p>
                           )}
                         </div>
-                        <div className="col-span-1 text-right text-sm font-medium">{(machine?.rate || machine?.ratePerHour)?.toFixed(0) ?? "-"}</div>
-                        <div className="col-span-1 text-right">
-                          <Input type="number" value={op.hours.toString()} onChange={(e) => updateOperation(op.id, "hours", parseFloat(e.target.value) || 0)} className="h-8 px-1 text-sm text-right" />
+                        <div className="col-span-1 text-right text-sm font-medium">
+                          {(machine?.rate || machine?.ratePerHour)?.toFixed(
+                            0,
+                          ) ?? "-"}
                         </div>
-                        <div className="col-span-1 text-right text-sm font-medium">₹{cost.toFixed(0)}</div>
+                        <div className="col-span-1 text-right">
+                          <Input
+                            type="number"
+                            value={op.hours.toString()}
+                            onChange={(e) =>
+                              updateOperation(
+                                op.id,
+                                "hours",
+                                parseFloat(e.target.value) || 0,
+                              )
+                            }
+                            className="h-8 px-1 text-sm text-right"
+                          />
+                        </div>
+                        <div className="col-span-1 text-right text-sm font-medium">
+                          ₹{cost.toFixed(0)}
+                        </div>
                         <div className="col-span-1 flex items-center">
-                          <Button size="small" variant="destructive" onClick={() => removeOperation(op.id)}>
+                          <Button
+                            size="small"
+                            variant="destructive"
+                            onClick={() => removeOperation(op.id)}
+                          >
                             Remove
                           </Button>
                         </div>
@@ -420,9 +575,14 @@ export default function CostEstimation() {
             </CardHeader>
             <CardContent className="space-y-3">
               {breakdown.map((item) => (
-                <div key={item.label} className="flex justify-between text-sm border-b border-slate-100 pb-2 last:border-0">
+                <div
+                  key={item.label}
+                  className="flex justify-between text-sm border-b border-slate-100 pb-2 last:border-0"
+                >
                   <span className="text-slate-500">{item.label}</span>
-                  <span className="font-medium text-slate-900">₹{item.value.toFixed(2)}</span>
+                  <span className="font-medium text-slate-900">
+                    ₹{item.value.toFixed(2)}
+                  </span>
                 </div>
               ))}
               <div className="pt-3 border-t border-slate-200">
@@ -432,34 +592,53 @@ export default function CostEstimation() {
                 </div>
                 <div className="flex justify-between text-sm mt-1">
                   <span className="text-slate-500">Scrap ({scrapPct}%)</span>
-                  <span className="text-slate-500">₹{(costWithScrap - baseCostPerUnit).toFixed(2)}</span>
+                  <span className="text-slate-500">
+                    ₹{(costWithScrap - baseCostPerUnit).toFixed(2)}
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm mt-1">
-                  <span className="text-slate-500">Profit Margin ({profitMargin}%)</span>
-                  <span className="text-slate-500">₹{(sellingPricePerUnit - costWithScrap).toFixed(2)}</span>
+                  <span className="text-slate-500">
+                    Profit Margin ({profitMargin}%)
+                  </span>
+                  <span className="text-slate-500">
+                    ₹{(sellingPricePerUnit - costWithScrap).toFixed(2)}
+                  </span>
                 </div>
               </div>
               <div className="mt-4 pt-3 border-t border-slate-200">
-                <div className="flex justify-between text-lg font-bold text-indigo-600">
+                <div className="flex justify-between text-lg font-bold text-slate-950">
                   <span>Selling Price / Unit</span>
                   <span>₹{sellingPricePerUnit.toFixed(2)}</span>
                 </div>
                 <div className="mt-2">
-                  <h4 className="text-xs font-semibold text-slate-500 uppercase mb-2">Volume Pricing</h4>
+                  <h4 className="text-xs font-semibold text-slate-500 uppercase mb-2">
+                    Volume Pricing
+                  </h4>
                   <div className="grid grid-cols-3 gap-4">
                     {[volume1, volume2, volume3].map((vol, i) => {
                       const c = computeCosts(parseFloat(vol || "0"));
                       return (
-                        <div key={i} className="p-3 rounded-lg border border-slate-200 bg-slate-50">
-                          <div className="text-xs font-semibold text-slate-700 mb-1">Volume {i + 1}</div>
-                          <div className="text-sm text-slate-500">{parseFloat(vol || "0").toLocaleString()} units</div>
+                        <div
+                          key={i}
+                          className="p-3 rounded-lg border border-slate-200 bg-slate-50"
+                        >
+                          <div className="text-xs font-semibold text-slate-700 mb-1">
+                            Volume {i + 1}
+                          </div>
+                          <div className="text-sm text-slate-500">
+                            {parseFloat(vol || "0").toLocaleString()} units
+                          </div>
                           <div className="mt-1 flex justify-between text-sm">
                             <span className="text-slate-500">Unit Price</span>
-                            <span className="font-medium text-indigo-600">₹{c.withProfit.toFixed(2)}</span>
+                            <span className="font-medium text-slate-900">
+                              ₹{c.withProfit.toFixed(2)}
+                            </span>
                           </div>
                           <div className="mt-1 flex justify-between text-sm">
                             <span className="text-slate-500">Total</span>
-                            <span className="font-medium text-slate-900">₹{c.total.toFixed(0)}</span>
+                            <span className="font-medium text-slate-900">
+                              ₹{c.total.toFixed(0)}
+                            </span>
                           </div>
                         </div>
                       );
@@ -473,28 +652,59 @@ export default function CostEstimation() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between gap-2">
               <CardTitle>Overhead Settings</CardTitle>
-              <Button type="button" size="small" variant="outline" onClick={suggestWithAI} disabled={aiBusy}>
-                <Sparkles className="mr-1.5 size-4" /> {aiBusy ? "Suggesting..." : "AI Suggest"}
+              <Button
+                type="button"
+                size="small"
+                variant="outline"
+                onClick={suggestWithAI}
+                disabled={aiBusy}
+              >
+                <Sparkles className="mr-1.5 size-4" />{" "}
+                {aiBusy ? "Suggesting..." : "AI Suggest"}
               </Button>
             </CardHeader>
             <CardContent className="space-y-4 pt-0">
               {aiError && <p className="text-xs text-rose-600">{aiError}</p>}
-              {aiNote && <p className="text-xs text-slate-700 bg-indigo-50 border border-indigo-100 rounded p-2">{aiNote}</p>}
+              {aiNote && (
+                <p className="text-xs text-slate-700 bg-slate-100 border border-slate-200 rounded p-2">
+                  {aiNote}
+                </p>
+              )}
               <div className="space-y-1">
                 <label className="label-field">Scrap Percentage (%)</label>
-                <Input type="number" value={scrapPct} onChange={(e) => setScrapPct(e.target.value)} className="w-24" />
+                <Input
+                  type="number"
+                  value={scrapPct}
+                  onChange={(e) => setScrapPct(e.target.value)}
+                  className="w-24"
+                />
               </div>
               <div className="space-y-1">
                 <label className="label-field">Profit Margin (%)</label>
-                <Input type="number" value={profitMargin} onChange={(e) => setProfitMargin(e.target.value)} className="w-24" />
+                <Input
+                  type="number"
+                  value={profitMargin}
+                  onChange={(e) => setProfitMargin(e.target.value)}
+                  className="w-24"
+                />
               </div>
               <div className="space-y-1">
                 <label className="label-field">Labour Rate (₹/hr)</label>
-                <Input type="number" value={labourRate} disabled className="w-24 bg-slate-100" />
+                <Input
+                  type="number"
+                  value={labourRate}
+                  disabled
+                  className="w-24 bg-slate-100"
+                />
               </div>
               <div className="space-y-1">
                 <label className="label-field">Power Rate (₹/hr)</label>
-                <Input type="number" value={powerRate} disabled className="w-24 bg-slate-100" />
+                <Input
+                  type="number"
+                  value={powerRate}
+                  disabled
+                  className="w-24 bg-slate-100"
+                />
               </div>
             </CardContent>
           </Card>

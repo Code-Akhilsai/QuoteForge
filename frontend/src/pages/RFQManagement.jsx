@@ -1,11 +1,27 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Mail, BarChart3, Clock, Save, Plus, Sparkles, Calculator } from "lucide-react";
+import {
+  Mail,
+  BarChart3,
+  Save,
+  Plus,
+  Sparkles,
+  Calculator,
+  Trash2,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
-import { TableContainer, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
+import {
+  TableContainer,
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/Table";
 import { formatCurrency, formatDate } from "@/utils/helpers";
 import axios from "@/api";
 import { useNavigate } from "react-router-dom";
@@ -118,7 +134,9 @@ export default function RFQManagement() {
       productName: rfq.productName || "",
       quantity: rfq.quantity || "",
       priority: rfq.priority || "medium",
-      deadline: rfq.deadline ? new Date(rfq.deadline).toISOString().slice(0, 10) : "",
+      deadline: rfq.deadline
+        ? new Date(rfq.deadline).toISOString().slice(0, 10)
+        : "",
       estimatedValue: rfq.estimatedValue || "",
       status: rfq.status || "estimating",
       lossReason: rfq.lossReason || "",
@@ -171,9 +189,33 @@ export default function RFQManagement() {
       });
       setAiNotes(d.notes || "");
     } catch (e) {
-      setAiError(e?.response?.data?.message || "AI extraction failed. You can still fill the form manually.");
+      setAiError(
+        e?.response?.data?.message ||
+          "AI extraction failed. You can still fill the form manually.",
+      );
     } finally {
       setAiBusy(false);
+    }
+  };
+
+  const convertToQuotation = async (rfq) => {
+    const id = rfq._id || rfq.id;
+    if (!id) return;
+    try {
+      const res = await axios.post("/quotations", {
+        customerName: rfq.customerName || "Walk-in Customer",
+        customerEmail: rfq.customerEmail || "",
+        productName: rfq.productName || "Custom Part",
+        quantity: rfq.quantity || 1,
+        unitCost: 0,
+        totalCost: 0,
+        rfqId: id,
+      });
+      if (res.status === 201 || res.status === 200) {
+        navigate("/cost-estimation", { state: { rfqId: id } });
+      }
+    } catch {
+      // ignore
     }
   };
 
@@ -242,23 +284,27 @@ export default function RFQManagement() {
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 page-header">
         <div>
           <h1 className="section-title">RFQ Management</h1>
-          <p className="section-subtitle">Manage customer Request for Quotation (RFQ) records</p>
+          <p className="section-subtitle">
+            Manage customer Request for Quotation (RFQ) records
+          </p>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="outline" size="small" onClick={() => openCreate()}>
             <Plus className="mr-2 size-4" /> New RFQ
           </Button>
-          <Button onClick={() => {
-            const load = async () => {
-              try {
-                const res = await axios.get("/rfqs");
-                setRFQs(res.data.rfqs || []);
-              } catch {
-                // ignore
-              }
-            };
-            void load();
-          }}>
+          <Button
+            onClick={() => {
+              const load = async () => {
+                try {
+                  const res = await axios.get("/rfqs");
+                  setRFQs(res.data.rfqs || []);
+                } catch {
+                  // ignore
+                }
+              };
+              void load();
+            }}
+          >
             <Save className="mr-2 size-4" /> Refresh
           </Button>
         </div>
@@ -280,7 +326,7 @@ export default function RFQManagement() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="text-sm border border-slate-200 rounded-md bg-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="text-sm border border-slate-200 rounded-md bg-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-900"
               >
                 <option value="all">All statuses</option>
                 <option value="draft">Draft</option>
@@ -300,10 +346,14 @@ export default function RFQManagement() {
                   <TableRow>
                     <TableHead>RFQ #</TableHead>
                     <TableHead>Customer</TableHead>
-                    <TableHead className="hidden lg:table-cell">Contact</TableHead>
+                    <TableHead className="hidden lg:table-cell">
+                      Contact
+                    </TableHead>
                     <TableHead>Product</TableHead>
                     <TableHead className="text-right w-20">Qty</TableHead>
-                    <TableHead className="text-right w-24">Est. Value</TableHead>
+                    <TableHead className="text-right w-24">
+                      Est. Value
+                    </TableHead>
                     <TableHead className="text-center w-20">Status</TableHead>
                     <TableHead className="text-right w-16">Deadline</TableHead>
                     <TableHead className="w-24">Actions</TableHead>
@@ -312,38 +362,85 @@ export default function RFQManagement() {
                 <TableBody>
                   {filtered.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-8 text-sm text-slate-500">
+                      <TableCell
+                        colSpan={9}
+                        className="text-center py-8 text-sm text-slate-500"
+                      >
                         No RFQs found. Add your first RFQ or upload data.
                       </TableCell>
                     </TableRow>
                   ) : (
                     filtered.map((rfq) => (
                       <TableRow key={rfq._id || rfq.id}>
-                        <TableCell className="font-medium">{rfq.rfqNumber}</TableCell>
+                        <TableCell className="font-medium">
+                          {rfq.rfqNumber}
+                        </TableCell>
                         <TableCell>
                           <div className="font-medium">{rfq.customerName}</div>
-                          <div className="text-xs text-slate-500">{rfq.owner || rfq.createdBy?.name || ""}</div>
+                          <div className="text-xs text-slate-500">
+                            {rfq.owner || rfq.createdBy?.name || ""}
+                          </div>
                         </TableCell>
                         <TableCell className="hidden lg:table-cell text-sm text-slate-500">
                           {rfq.customerEmail}
                         </TableCell>
-                        <TableCell className="font-medium">{rfq.productName}</TableCell>
-                        <TableCell className="text-right">{rfq.quantity}</TableCell>
-                        <TableCell className="text-right font-medium">{formatCurrency(rfq.estimatedValue)}</TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant={rfq.status === "estimating" ? "info" : rfq.status === "sent" ? "warning" : rfq.status === "won" ? "success" : rfq.status === "lost" ? "danger" : "info"}>{rfq.status}</Badge>
+                        <TableCell className="font-medium">
+                          {rfq.productName}
                         </TableCell>
-                        <TableCell className="text-right text-xs text-slate-500">{rfq.deadline ? formatDate(rfq.deadline) : "-"}</TableCell>
+                        <TableCell className="text-right">
+                          {rfq.quantity}
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          {formatCurrency(rfq.estimatedValue)}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge
+                            variant={
+                              rfq.status === "estimating"
+                                ? "info"
+                                : rfq.status === "sent"
+                                  ? "warning"
+                                  : rfq.status === "won"
+                                    ? "success"
+                                    : rfq.status === "lost"
+                                      ? "danger"
+                                      : "info"
+                            }
+                          >
+                            {rfq.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right text-xs text-slate-500">
+                          {rfq.deadline ? formatDate(rfq.deadline) : "-"}
+                        </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center gap-1 justify-end">
-                            <Button size="small" variant="ghost" className="p-1.5" title="Convert to Quotation" onClick={() => navigate("/cost-estimation", { state: { rfqId: rfq._id || rfq.id } })}>
+                            <Button
+                              size="small"
+                              variant="ghost"
+                              className="p-1.5"
+                              title="Convert to Quotation"
+                              onClick={() => convertToQuotation(rfq)}
+                            >
                               <Calculator className="size-4" />
                             </Button>
-                            <Button size="small" variant="ghost" className="p-1.5" title="Edit" onClick={() => openEdit(rfq)}>
+                            <Button
+                              size="small"
+                              variant="ghost"
+                              className="p-1.5"
+                              title="Edit"
+                              onClick={() => openEdit(rfq)}
+                            >
                               <BarChart3 className="size-4" />
                             </Button>
-                            <Button size="small" variant="ghost" className="p-1.5 text-rose-500" title="Delete" onClick={() => deleteRFQ(rfq._id || rfq.id)}>
-                              <Clock className="size-4" />
+                            <Button
+                              size="small"
+                              variant="ghost"
+                              className="p-1.5 text-rose-500"
+                              title="Delete"
+                              onClick={() => deleteRFQ(rfq._id || rfq.id)}
+                            >
+                              <Trash2 className="size-4" />
                             </Button>
                           </div>
                         </TableCell>
@@ -361,68 +458,128 @@ export default function RFQManagement() {
         className={`fixed inset-0 z-50 overflow-y-auto p-4 sm:p-6 ${openDialog ? "" : "hidden"}`}
         onClick={(e) => e.target === e.currentTarget && setOpenDialog(false)}
       >
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setOpenDialog(false)} />
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+          onClick={() => setOpenDialog(false)}
+        />
         <div className="relative mx-auto flex min-h-full w-full max-w-lg items-start justify-center py-4 sm:items-center">
           <Card className="w-full max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)] flex flex-col overflow-hidden">
             <CardHeader className="shrink-0">
               <CardTitle>{editingId ? "Edit RFQ" : "Create New RFQ"}</CardTitle>
             </CardHeader>
             <CardContent className="overflow-y-auto min-h-0">
-              <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-4">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSubmit();
+                }}
+                className="space-y-4"
+              >
                 {!editingId && (
-                  <div className="space-y-3 p-4 rounded-xl border border-indigo-100 bg-indigo-50/40">
-                    <label className="label-field flex items-center gap-2 text-indigo-900">
-                      <Sparkles className="size-4 text-indigo-600 shrink-0" /> AI RFQ Intake (Gemini)
+                  <div className="space-y-3 p-4 rounded-xl border border-slate-200 bg-slate-50">
+                    <label className="label-field flex items-center gap-2 text-slate-900 font-semibold">
+                      <Sparkles className="size-4 text-slate-700 shrink-0" /> AI
+                      RFQ Intake (Gemini)
                     </label>
                     <textarea
                       value={aiText}
                       onChange={(e) => setAiText(e.target.value)}
                       rows={4}
                       placeholder="Paste RFQ email or text. AI will extract fields; review before creating."
-                      className="w-full text-sm border border-slate-200 rounded-lg bg-white px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y min-h-[96px]"
+                      className="w-full text-sm border border-slate-200 rounded-lg bg-white px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-slate-900 resize-y min-h-24"
                     />
-                    {aiError && <p className="text-xs text-rose-600">{aiError}</p>}
+                    {aiError && (
+                      <p className="text-xs text-rose-600">{aiError}</p>
+                    )}
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                      <Button type="button" size="small" variant="primary" onClick={extractWithAI} disabled={aiBusy} className="shrink-0 self-start">
-                        <Sparkles className="mr-1.5 size-4" /> {aiBusy ? "Extracting..." : "Extract with AI"}
+                      <Button
+                        type="button"
+                        size="small"
+                        variant="primary"
+                        onClick={extractWithAI}
+                        disabled={aiBusy}
+                        className="shrink-0 self-start"
+                      >
+                        <Sparkles className="mr-1.5 size-4" />{" "}
+                        {aiBusy ? "Extracting..." : "Extract with AI"}
                       </Button>
-                      <span className="text-xs text-slate-600 leading-snug">Review and edit extracted values below before creating the RFQ.</span>
+                      <span className="text-xs text-slate-600 leading-snug">
+                        Review and edit extracted values below before creating
+                        the RFQ.
+                      </span>
                     </div>
-                    {aiNotes && <p className="text-xs text-slate-700 bg-white border border-slate-200 rounded-lg p-2.5"><span className="font-medium text-slate-900">AI notes:</span> {aiNotes}</p>}
+                    {aiNotes && (
+                      <p className="text-xs text-slate-700 bg-white border border-slate-200 rounded-lg p-2.5">
+                        <span className="font-medium text-slate-900">
+                          AI notes:
+                        </span>{" "}
+                        {aiNotes}
+                      </p>
+                    )}
                   </div>
                 )}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="label-field">Customer Name</label>
-                    <Input placeholder="e.g. Precision Auto Components" {...form.register("customerName")} required />
+                    <Input
+                      placeholder="e.g. Precision Auto Components"
+                      {...form.register("customerName")}
+                      required
+                    />
                   </div>
                   <div className="space-y-1">
                     <label className="label-field">Customer Email</label>
-                    <Input type="email" placeholder="e.g. buying@company.in" {...form.register("customerEmail")} required />
+                    <Input
+                      type="email"
+                      placeholder="e.g. buying@company.in"
+                      {...form.register("customerEmail")}
+                      required
+                    />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="label-field">Customer Phone</label>
-                    <Input type="tel" placeholder="+91 98765 43210" {...form.register("customerPhone")} required />
+                    <Input
+                      type="tel"
+                      placeholder="+91 98765 43210"
+                      {...form.register("customerPhone")}
+                      required
+                    />
                   </div>
                   <div className="space-y-1">
                     <label className="label-field">Product Name</label>
-                    <Input placeholder="e.g. Brake Caliper Housing" {...form.register("productName")} required />
+                    <Input
+                      placeholder="e.g. Brake Caliper Housing"
+                      {...form.register("productName")}
+                      required
+                    />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="label-field">Quantity</label>
-                  <Input type="number" placeholder="Units" {...form.register("quantity")} required />
-                </div>
-                <div className="space-y-1">
-                  <label className="label-field">Estimated Value (₹)</label>
-                  <Input type="number" placeholder="0.00" {...form.register("estimatedValue")} />
-                </div>
-                <div className="space-y-1">
-                  <label className="label-field">Priority</label>
-                    <select {...form.register("priority")} className="input-field">
+                  <div className="space-y-1">
+                    <label className="label-field">Quantity</label>
+                    <Input
+                      type="number"
+                      placeholder="Units"
+                      {...form.register("quantity")}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="label-field">Estimated Value (₹)</label>
+                    <Input
+                      type="number"
+                      placeholder="0.00"
+                      {...form.register("estimatedValue")}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="label-field">Priority</label>
+                    <select
+                      {...form.register("priority")}
+                      className="input-field"
+                    >
                       <option value="low">Low</option>
                       <option value="medium">Medium</option>
                       <option value="high">High</option>
@@ -435,13 +592,23 @@ export default function RFQManagement() {
                 </div>
                 <div className="space-y-1">
                   <label className="label-field">Loss Reason</label>
-                  <Input placeholder="Reason for losing this RFQ" {...form.register("lossReason")} />
+                  <Input
+                    placeholder="Reason for losing this RFQ"
+                    {...form.register("lossReason")}
+                  />
                 </div>
                 <div className="flex justify-end gap-3 pt-2">
-                  <Button type="button" variant="outline" size="small" onClick={() => setOpenDialog(false)}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="small"
+                    onClick={() => setOpenDialog(false)}
+                  >
                     Cancel
                   </Button>
-                  <Button type="submit">{editingId ? "Save RFQ" : "Create RFQ"}</Button>
+                  <Button type="submit">
+                    {editingId ? "Save RFQ" : "Create RFQ"}
+                  </Button>
                 </div>
               </form>
             </CardContent>

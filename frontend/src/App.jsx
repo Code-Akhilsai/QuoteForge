@@ -9,22 +9,9 @@ import CostEstimation from "@/pages/CostEstimation";
 import RateMasters from "@/pages/RateMasters";
 import QuotationHistory from "@/pages/QuotationHistory";
 import Approvals from "@/pages/Approvals";
-import { useAuth } from "@/hooks/useAuth";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import GuestRoute from "@/components/auth/GuestRoute";
 import "./App.css";
-
-function ProtectedRoute({ children }) {
-  const { isAuthenticated, isLoading } = useAuth();
-  if (isLoading) return null;
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
-  return children;
-}
-
-function GuestRoute({ children }) {
-  const { isAuthenticated, isLoading } = useAuth();
-  if (isLoading) return null;
-  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
-  return children;
-}
 
 function App() {
   return (
@@ -36,9 +23,10 @@ function App() {
           <Route path="/dashboard" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
           <Route path="/rfq" element={<ProtectedRoute><Layout><RFQManagement /></Layout></ProtectedRoute>} />
           <Route path="/cost-estimation" element={<ProtectedRoute><Layout><CostEstimation /></Layout></ProtectedRoute>} />
-          <Route path="/rate-masters" element={<ProtectedRoute><Layout><RateMasters /></Layout></ProtectedRoute>} />
+          <Route path="/rate-masters" element={<ProtectedRoute allowedRoles={["admin", "sales_head"]}><Layout><RateMasters /></Layout></ProtectedRoute>} />
           <Route path="/quotation-history" element={<ProtectedRoute><Layout><QuotationHistory /></Layout></ProtectedRoute>} />
-          <Route path="/approvals" element={<ProtectedRoute><Layout><Approvals /></Layout></ProtectedRoute>} />
+          <Route path="/approvals" element={<ProtectedRoute allowedRoles={["admin", "sales_head"]}><Layout><Approvals /></Layout></ProtectedRoute>} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

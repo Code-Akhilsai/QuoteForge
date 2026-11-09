@@ -50,6 +50,16 @@ const quotationSchema = new mongoose.Schema(
     validTill: {
       type: Date,
     },
+    freightCost: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    weight: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

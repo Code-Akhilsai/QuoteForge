@@ -4,7 +4,15 @@ import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { TableContainer, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
+import {
+  TableContainer,
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/Table";
 import { formatCurrency, formatDate } from "@/utils/helpers";
 import axios from "@/api";
 
@@ -41,12 +49,15 @@ export default function Approvals() {
         setQuotations(res.data.quotations || []);
         setError("");
       } catch (e) {
-        if (!cancelled) setError(e?.response?.data?.message || "Failed to load quotations.");
+        if (!cancelled)
+          setError(e?.response?.data?.message || "Failed to load quotations.");
       } finally {
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const setStatus = async (q, status) => {
@@ -64,21 +75,29 @@ export default function Approvals() {
     }
   };
 
-  const filtered = useMemo(() => quotations.filter((q) => {
-    const term = search.toLowerCase();
-    const matchesSearch =
-      (q.quotationNumber || "").toLowerCase().includes(term) ||
-      (q.customerName || "").toLowerCase().includes(term) ||
-      (q.productName || "").toLowerCase().includes(term);
-    const matchesStatus =
-      statusFilter === "all" ? true :
-      statusFilter === "pending" ? PENDING.has(q.status) :
-      q.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  }), [quotations, search, statusFilter]);
+  const filtered = useMemo(
+    () =>
+      quotations.filter((q) => {
+        const term = search.toLowerCase();
+        const matchesSearch =
+          (q.quotationNumber || "").toLowerCase().includes(term) ||
+          (q.customerName || "").toLowerCase().includes(term) ||
+          (q.productName || "").toLowerCase().includes(term);
+        const matchesStatus =
+          statusFilter === "all"
+            ? true
+            : statusFilter === "pending"
+              ? PENDING.has(q.status)
+              : q.status === statusFilter;
+        return matchesSearch && matchesStatus;
+      }),
+    [quotations, search, statusFilter],
+  );
 
   const pending = quotations.filter((q) => PENDING.has(q.status)).length;
-  const highValuePending = quotations.filter((q) => PENDING.has(q.status) && (q.totalCost || 0) > APPROVAL_THRESHOLD).length;
+  const highValuePending = quotations.filter(
+    (q) => PENDING.has(q.status) && (q.totalCost || 0) > APPROVAL_THRESHOLD,
+  ).length;
   const approved = quotations.filter((q) => q.status === "approved").length;
   const rejected = quotations.filter((q) => q.status === "rejected").length;
 
@@ -87,11 +106,21 @@ export default function Approvals() {
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 page-header">
         <div>
           <h1 className="section-title">Approvals</h1>
-          <p className="section-subtitle">Review quotations. Quotes above {formatCurrency(APPROVAL_THRESHOLD)} require Admin or Sales Head approval.</p>
+          <p className="section-subtitle">
+            Review quotations. Quotes above {formatCurrency(APPROVAL_THRESHOLD)}{" "}
+            require Admin or Sales Head approval.
+          </p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant={pending ? "warning" : "success"}>{pending} pending</Badge>
-          <Button variant="outline" size="small" onClick={load} disabled={loading}>
+          <Badge variant={pending ? "warning" : "success"}>
+            {pending} pending
+          </Badge>
+          <Button
+            variant="outline"
+            size="small"
+            onClick={load}
+            disabled={loading}
+          >
             <RefreshCw className="mr-2 size-4" /> Refresh
           </Button>
         </div>
@@ -111,7 +140,7 @@ export default function Approvals() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="text-sm border border-slate-200 rounded-md bg-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="text-sm border border-slate-200 rounded-md bg-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-900"
             >
               <option value="pending">Pending (draft/sent)</option>
               <option value="all">All statuses</option>
@@ -124,10 +153,13 @@ export default function Approvals() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-12 text-sm text-slate-500">Loading quotations...</div>
+            <div className="text-center py-12 text-sm text-slate-500">
+              Loading quotations...
+            </div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-12 text-sm text-slate-500">
-              No quotations found. Create a quotation from Cost Estimation to review it here.
+              No quotations found. Create a quotation from Cost Estimation to
+              review it here.
             </div>
           ) : (
             <TableContainer>
@@ -152,24 +184,54 @@ export default function Approvals() {
                       <TableRow key={id}>
                         <TableCell className="font-medium">
                           {q.quotationNumber}
-                          {highValue && <div className="text-[11px] text-amber-700">Above ₹25L threshold</div>}
+                          {highValue && (
+                            <div className="text-[11px] text-amber-700">
+                              Above ₹25L threshold
+                            </div>
+                          )}
                         </TableCell>
                         <TableCell>{q.customerName}</TableCell>
                         <TableCell>{q.productName}</TableCell>
-                        <TableCell className="text-right font-medium">{formatCurrency(q.totalCost)}</TableCell>
+                        <TableCell className="text-right font-medium">
+                          {formatCurrency(q.totalCost)}
+                        </TableCell>
                         <TableCell className="text-center">
-                          <Badge variant={q.status === "approved" ? "success" : q.status === "rejected" ? "danger" : q.status === "sent" ? "info" : "secondary"}>
+                          <Badge
+                            variant={
+                              q.status === "approved"
+                                ? "success"
+                                : q.status === "rejected"
+                                  ? "danger"
+                                  : q.status === "sent"
+                                    ? "info"
+                                    : "secondary"
+                            }
+                          >
                             {q.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-right text-xs text-slate-500">{q.createdAt ? formatDate(q.createdAt) : "—"}</TableCell>
+                        <TableCell className="text-right text-xs text-slate-500">
+                          {q.createdAt ? formatDate(q.createdAt) : "—"}
+                        </TableCell>
                         <TableCell className="text-right">
                           {actionable ? (
                             <div className="flex items-center justify-end gap-1">
-                              <Button size="small" variant="success" onClick={() => setStatus(q, "approved")} disabled={busyId === id} title="Approve">
+                              <Button
+                                size="small"
+                                variant="success"
+                                onClick={() => setStatus(q, "approved")}
+                                disabled={busyId === id}
+                                title="Approve"
+                              >
                                 <Check className="size-3.5" />
                               </Button>
-                              <Button size="small" variant="danger" onClick={() => setStatus(q, "rejected")} disabled={busyId === id} title="Reject">
+                              <Button
+                                size="small"
+                                variant="danger"
+                                onClick={() => setStatus(q, "rejected")}
+                                disabled={busyId === id}
+                                title="Reject"
+                              >
                                 <X className="size-3.5" />
                               </Button>
                             </div>
@@ -188,10 +250,34 @@ export default function Approvals() {
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card><CardContent className="pt-4"><p className="text-xs text-slate-500 uppercase">Pending</p><p className="text-2xl font-bold text-slate-900">{pending}</p></CardContent></Card>
-        <Card><CardContent className="pt-4"><p className="text-xs text-slate-500 uppercase">&gt; ₹25L Pending</p><p className="text-2xl font-bold text-amber-700">{highValuePending}</p></CardContent></Card>
-        <Card><CardContent className="pt-4"><p className="text-xs text-slate-500 uppercase">Approved</p><p className="text-2xl font-bold text-emerald-700">{approved}</p></CardContent></Card>
-        <Card><CardContent className="pt-4"><p className="text-xs text-slate-500 uppercase">Rejected</p><p className="text-2xl font-bold text-rose-700">{rejected}</p></CardContent></Card>
+        <Card>
+          <CardContent className="pt-4">
+            <p className="text-xs text-slate-500 uppercase">Pending</p>
+            <p className="text-2xl font-bold text-slate-900">{pending}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4">
+            <p className="text-xs text-slate-500 uppercase">
+              &gt; ₹25L Pending
+            </p>
+            <p className="text-2xl font-bold text-amber-700">
+              {highValuePending}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4">
+            <p className="text-xs text-slate-500 uppercase">Approved</p>
+            <p className="text-2xl font-bold text-emerald-700">{approved}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4">
+            <p className="text-xs text-slate-500 uppercase">Rejected</p>
+            <p className="text-2xl font-bold text-rose-700">{rejected}</p>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

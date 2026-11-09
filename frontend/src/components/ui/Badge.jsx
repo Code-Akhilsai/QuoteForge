@@ -10,7 +10,7 @@ const Badge = forwardRef(({ className, variant = "secondary", ...props }, ref) =
     success: "bg-emerald-100 text-emerald-700 border border-emerald-200",
     warning: "bg-amber-100 text-amber-700 border border-amber-200",
     danger: "bg-rose-100 text-rose-700 border border-rose-200",
-    info: "bg-indigo-100 text-indigo-700 border border-indigo-200",
+    info: "bg-slate-100 text-slate-700 border border-slate-200",
     pending: "bg-amber-100 text-amber-700 border border-amber-200",
     approved: "bg-emerald-100 text-emerald-700 border border-emerald-200",
     rejected: "bg-rose-100 text-rose-700 border border-rose-200",
