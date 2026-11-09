@@ -312,8 +312,244 @@ export default function CostEstimation() {
     );
   }
 
+  const customerName = form.watch("customerName");
+  const productName = form.watch("productName");
+  const rfqSelectedObj = rfqs.find((r) => (r._id || r.id) === rfqIdValue);
+  const rfqDisplayNum = rfqSelectedObj?.rfqNumber || (typeof rfqIdValue === "string" ? rfqIdValue : "N/A");
+
+  const totalOrderSellingPrice = sellingPricePerUnit * safeQty;
+  const totalMaterialCost = materialCostPerUnit * safeQty;
+  const totalMachiningCost = machiningCostPerUnit * safeQty;
+  const totalLabourCost = labourCostPerUnit * safeQty;
+  const totalPowerCost = powerCostPerUnit * safeQty;
+  const totalFreightCost = parseFloat(freightCost || "0");
+  const scrapAmtPerUnit = costWithScrap - (baseCostPerUnit + freightPerUnit);
+  const profitAmtPerUnit = sellingPricePerUnit - costWithScrap;
+
   return (
     <div className="space-y-6">
+      {/* Printable Manufacturing Quotation & Cost Sheet (Only visible when printing) */}
+      <div className="hidden print:block font-sans text-slate-900 p-4 max-w-4xl mx-auto">
+        {/* Document Header */}
+        <div className="border-b-2 border-slate-900 pb-4 mb-6 flex justify-between items-start">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="bg-slate-900 text-white font-black text-sm px-2 py-0.5 rounded">QF</span>
+              <span className="text-2xl font-black tracking-tight text-slate-900">QuoteForge</span>
+            </div>
+            <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold">
+              Precision Discrete Manufacturing & Estimation
+            </p>
+            <p className="text-xs text-slate-500 mt-1">Company A, Chakan Industrial Area, Pune, Maharashtra</p>
+          </div>
+          <div className="text-right">
+            <span className="inline-block bg-slate-100 text-slate-800 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded border border-slate-300 mb-2">
+              Cost Estimation Sheet
+            </span>
+            <p className="text-xs text-slate-600 font-medium">Date: {new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p>
+            <p className="text-xs text-slate-600 font-medium">RFQ Ref: <span className="font-bold text-slate-900">{rfqDisplayNum || "N/A"}</span></p>
+          </div>
+        </div>
+
+        {/* Job / Part Information Cards */}
+        <div className="grid grid-cols-2 gap-4 mb-6 border border-slate-200 rounded-lg p-3 bg-slate-50">
+          <div>
+            <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Customer Information</p>
+            <p className="text-sm font-bold text-slate-900 mt-0.5">{customerName || "—"}</p>
+            {form.watch("customerEmail") && (
+              <p className="text-xs text-slate-600">{form.watch("customerEmail")}</p>
+            )}
+          </div>
+          <div>
+            <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Product & Order Volume</p>
+            <p className="text-sm font-bold text-slate-900 mt-0.5">{productName || "—"}</p>
+            <p className="text-xs text-slate-700 font-medium">Order Quantity: <span className="font-bold">{safeQty.toLocaleString()} units</span></p>
+          </div>
+        </div>
+
+        {/* 1. Raw Material Section */}
+        <div className="mb-5">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 border-b border-slate-200 pb-1 mb-2">
+            1. Raw Material Breakdown
+          </h3>
+          <table className="w-full text-xs text-left border border-slate-200">
+            <thead className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+              <tr>
+                <th className="p-2">Material Description</th>
+                <th className="p-2 text-right">Master Rate</th>
+                <th className="p-2 text-right">Batch Requirement</th>
+                <th className="p-2 text-right">Total Material Cost</th>
+                <th className="p-2 text-right">Cost / Unit</th>
+              </tr>
+            </thead>
+            <tbody>
+              {material ? (
+                <tr className="border-b border-slate-100">
+                  <td className="p-2 font-medium">{material.name}</td>
+                  <td className="p-2 text-right">₹{material.rate} / {material.unit}</td>
+                  <td className="p-2 text-right">{materialQty || "0"} {material.unit}</td>
+                  <td className="p-2 text-right font-semibold">₹{totalMaterialCost.toFixed(2)}</td>
+                  <td className="p-2 text-right font-bold text-slate-900">₹{materialCostPerUnit.toFixed(2)}</td>
+                </tr>
+              ) : (
+                <tr>
+                  <td colSpan="5" className="p-2 text-center text-slate-400 italic">No raw material specified</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* 2. Machining Operations Section */}
+        <div className="mb-5">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 border-b border-slate-200 pb-1 mb-2">
+            2. Machining & Process Operations
+          </h3>
+          <table className="w-full text-xs text-left border border-slate-200">
+            <thead className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+              <tr>
+                <th className="p-2">Machine / Operation</th>
+                <th className="p-2 text-right">Hourly Rate</th>
+                <th className="p-2 text-right">Cycle Duration</th>
+                <th className="p-2 text-right">Batch Cost</th>
+                <th className="p-2 text-right">Cost / Unit</th>
+              </tr>
+            </thead>
+            <tbody>
+              {operations.length > 0 ? (
+                operations.map((op, idx) => {
+                  const opCost = (Number(op.ratePerHour) || 0) * (Number(op.hours) || 0);
+                  const opPerUnit = opCost / safeQty;
+                  return (
+                    <tr key={idx} className="border-b border-slate-100">
+                      <td className="p-2 font-medium">{op.machineName || "Machine #" + (idx + 1)}</td>
+                      <td className="p-2 text-right">₹{Number(op.ratePerHour).toFixed(2)}/hr</td>
+                      <td className="p-2 text-right">{op.hours} hrs</td>
+                      <td className="p-2 text-right font-semibold">₹{opCost.toFixed(2)}</td>
+                      <td className="p-2 text-right font-bold">₹{opPerUnit.toFixed(2)}</td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan="5" className="p-2 text-center text-slate-400 italic">No machining operations configured</td>
+                </tr>
+              )}
+            </tbody>
+            {operations.length > 0 && (
+              <tfoot className="bg-slate-50 font-bold border-t border-slate-200">
+                <tr>
+                  <td colSpan="2" className="p-2 text-slate-700">Total Machining</td>
+                  <td className="p-2 text-right">{totalHours} hrs</td>
+                  <td className="p-2 text-right">₹{totalMachiningCost.toFixed(2)}</td>
+                  <td className="p-2 text-right text-slate-900">₹{machiningCostPerUnit.toFixed(2)}</td>
+                </tr>
+              </tfoot>
+            )}
+          </table>
+        </div>
+
+        {/* 3. Cost Roll-Up & Overheads */}
+        <div className="grid grid-cols-2 gap-4 mb-5">
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 border-b border-slate-200 pb-1 mb-2">
+              3. Labor & Overheads
+            </h3>
+            <table className="w-full text-xs text-left border border-slate-200">
+              <tbody>
+                <tr className="border-b border-slate-100">
+                  <td className="p-2 text-slate-600">Direct Labor (₹{labourRate}/hr × {totalHours} hrs)</td>
+                  <td className="p-2 text-right font-medium">₹{labourCostPerUnit.toFixed(2)}/unit</td>
+                </tr>
+                <tr className="border-b border-slate-100">
+                  <td className="p-2 text-slate-600">Power & Utility (₹{powerRate}/hr × {totalHours} hrs)</td>
+                  <td className="p-2 text-right font-medium">₹{powerCostPerUnit.toFixed(2)}/unit</td>
+                </tr>
+                {totalFreightCost > 0 && (
+                  <tr className="border-b border-slate-100">
+                    <td className="p-2 text-slate-600">Logistics & Freight</td>
+                    <td className="p-2 text-right font-medium">₹{freightPerUnit.toFixed(2)}/unit</td>
+                  </tr>
+                )}
+                <tr className="bg-slate-50 font-bold">
+                  <td className="p-2 text-slate-800">Prime Manufacturing Cost</td>
+                  <td className="p-2 text-right text-slate-900">₹{baseCostPerUnit.toFixed(2)}/unit</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 border-b border-slate-200 pb-1 mb-2">
+              4. Commercial Summary
+            </h3>
+            <table className="w-full text-xs text-left border border-slate-200">
+              <tbody>
+                <tr className="border-b border-slate-100">
+                  <td className="p-2 text-slate-600">Base Cost / Unit</td>
+                  <td className="p-2 text-right font-medium">₹{baseCostPerUnit.toFixed(2)}</td>
+                </tr>
+                <tr className="border-b border-slate-100">
+                  <td className="p-2 text-slate-600">Scrap Allowance ({scrapPct}%)</td>
+                  <td className="p-2 text-right font-medium">+ ₹{scrapAmtPerUnit.toFixed(2)}</td>
+                </tr>
+                <tr className="border-b border-slate-100">
+                  <td className="p-2 text-slate-600">Target Profit Margin ({profitMargin}%)</td>
+                  <td className="p-2 text-right font-medium">+ ₹{profitAmtPerUnit.toFixed(2)}</td>
+                </tr>
+                <tr className="bg-slate-900 text-white font-bold">
+                  <td className="p-2 text-sm">Recommended Selling Price</td>
+                  <td className="p-2 text-right text-sm">₹{sellingPricePerUnit.toFixed(2)} / unit</td>
+                </tr>
+                <tr className="bg-slate-100 font-black text-slate-900">
+                  <td className="p-2">Total Order Value ({safeQty} units)</td>
+                  <td className="p-2 text-right text-sm">₹{totalOrderSellingPrice.toFixed(2)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* 4. Volume Price Tiers */}
+        {(volume1 > 0 || volume2 > 0 || volume3 > 0) && (
+          <div className="mb-6">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 border-b border-slate-200 pb-1 mb-2">
+              5. Volume Discount Tiers
+            </h3>
+            <div className="grid grid-cols-3 gap-3">
+              {[volume1, volume2, volume3].map((vol, i) => {
+                const c = computeCosts(parseFloat(vol || "0"));
+                return (
+                  <div key={i} className="border border-slate-200 rounded p-2 text-center bg-slate-50">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase">Tier {i + 1} ({parseFloat(vol || 0).toLocaleString()} units)</p>
+                    <p className="text-xs font-bold text-slate-900 mt-1">₹{c.withProfit.toFixed(2)} / unit</p>
+                    <p className="text-[11px] text-slate-600 font-medium">Total: ₹{c.total.toFixed(0)}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Footer & Approvals */}
+        <div className="mt-8 pt-4 border-t border-slate-300 flex justify-between text-xs text-slate-500">
+          <div>
+            <p className="font-semibold text-slate-700">Prepared By: Estimator</p>
+            <p className="text-[10px]">QuoteForge Intelligent Costing Engine</p>
+          </div>
+          <div className="text-center">
+            <div className="w-36 border-b border-slate-400 mb-1"></div>
+            <p className="font-semibold text-slate-700">Engineering Approval</p>
+          </div>
+          <div className="text-right">
+            <div className="w-36 border-b border-slate-400 mb-1"></div>
+            <p className="font-semibold text-slate-700">Sales Head Sign-Off</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Screen Interface (Hidden when printing) */}
+      <div className="print:hidden space-y-6">
       <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="min-w-0">
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
@@ -762,6 +998,7 @@ export default function CostEstimation() {
             </CardContent>
           </Card>
         </div>
+      </div>
       </div>
     </div>
   );
