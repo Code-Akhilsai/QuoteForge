@@ -14,7 +14,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "@/api";
 
@@ -42,10 +41,10 @@ export default function CostEstimation() {
   const [rfqs, setRfqs] = useState([]);
   const [materialSelection, setMaterialSelection] = useState("");
   const [materialQty, setMaterialQty] = useState("");
-  const [quantity, setQuantity] = useState("100");
-  const [volume1, setVolume1] = useState("100");
-  const [volume2, setVolume2] = useState("500");
-  const [volume3, setVolume3] = useState("1000");
+  const [quantity, setQuantity] = useState("0");
+  const [volume1, setVolume1] = useState("0");
+  const [volume2, setVolume2] = useState("0");
+  const [volume3, setVolume3] = useState("0");
   const [scrapPct, setScrapPct] = useState(
     OVERHEAD_DEFAULTS.scrapPercentage.toString(),
   );
@@ -121,21 +120,23 @@ export default function CostEstimation() {
 
   const material = materials.find((m) => (m._id || m.id) === materialSelection);
 
+  const safeQty = Math.max(1, parseFloat(quantity || "0") || 1);
+
   const materialCostPerUnit =
     material && materialQty
-      ? (material.rate * parseFloat(materialQty)) / parseFloat(quantity || 1)
+      ? (material.rate * parseFloat(materialQty)) / safeQty
       : 0;
 
   const machiningCostPerUnit =
     operations.reduce((sum, op) => sum + op.ratePerHour * op.hours, 0) /
-    parseFloat(quantity || 1);
+    safeQty;
 
   const labourRate = OVERHEAD_DEFAULTS.labourRatePerHour;
   const powerRate = OVERHEAD_DEFAULTS.powerRatePerHour;
   const totalHours = operations.reduce((sum, op) => sum + op.hours, 0);
   const labourCostPerUnit =
-    (labourRate * totalHours) / parseFloat(quantity || 1);
-  const powerCostPerUnit = (powerRate * totalHours) / parseFloat(quantity || 1);
+    (labourRate * totalHours) / safeQty;
+  const powerCostPerUnit = (powerRate * totalHours) / safeQty;
 
   const baseCostPerUnit =
     materialCostPerUnit +
@@ -143,23 +144,24 @@ export default function CostEstimation() {
     labourCostPerUnit +
     powerCostPerUnit;
   const freightPerUnit =
-    parseFloat(freightCost || "0") / parseFloat(quantity || 1);
+    parseFloat(freightCost || "0") / safeQty;
   const scrapFactor = 1 + parseFloat(scrapPct || 0) / 100;
   const costWithScrap = (baseCostPerUnit + freightPerUnit) * scrapFactor;
   const profitFactor = 1 + parseFloat(profitMargin || 0) / 100;
   const sellingPricePerUnit = costWithScrap * profitFactor;
 
   const computeCosts = (vol) => {
+    const v = Math.max(1, parseFloat(vol || "0") || 1);
     if (!vol || vol <= 0) return { withProfit: 0, total: 0 };
     const matCost = material
-      ? (material.rate * parseFloat(materialQty || "0")) / vol
+      ? (material.rate * parseFloat(materialQty || "0")) / v
       : 0;
     const machCost =
-      operations.reduce((sum, op) => sum + op.ratePerHour * op.hours, 0) / vol;
-    const labourCost = (labourRate * totalHours) / vol;
-    const powerCost = (powerRate * totalHours) / vol;
+      operations.reduce((sum, op) => sum + op.ratePerHour * op.hours, 0) / v;
+    const labourCost = (labourRate * totalHours) / v;
+    const powerCost = (powerRate * totalHours) / v;
     const base = matCost + machCost + labourCost + powerCost;
-    const freightPerVol = parseFloat(freightCost || "0") / vol;
+    const freightPerVol = parseFloat(freightCost || "0") / v;
     const withScrap = (base + freightPerVol) * scrapFactor;
     const withProfit = withScrap * profitFactor;
     return {
@@ -171,7 +173,7 @@ export default function CostEstimation() {
       base,
       withScrap,
       withProfit,
-      total: withProfit * vol,
+      total: withProfit * v,
     };
   };
 
@@ -181,12 +183,29 @@ export default function CostEstimation() {
     const unitPrice = parseFloat(sellingPricePerUnit.toFixed(2));
     const totalPrice = parseFloat((unitPrice * qty).toFixed(2));
 
+    if (!values.productName || !values.productName.trim()) {
+      setAiError("Product name is required before creating a quotation.");
+      return;
+    }
+    if (!values.customerName || !values.customerName.trim()) {
+      setAiError("Customer name is required before creating a quotation.");
+      return;
+    }
+    if (!qty || qty <= 0) {
+      setAiError("Quantity must be greater than 0.");
+      return;
+    }
+    if (unitPrice <= 0) {
+      setAiError("Selling price is zero. Add a material and/or machining operations.");
+      return;
+    }
+
     setSavingQuotation(true);
     try {
       const res = await axios.post("/quotations", {
-        customerName: values.customerName || "Walk-in Customer",
+        customerName: values.customerName,
         customerEmail: values.customerEmail || "",
-        productName: values.productName || "Custom Part",
+        productName: values.productName,
         quantity: qty,
         unitCost: unitPrice,
         totalCost: totalPrice,
@@ -268,8 +287,26 @@ export default function CostEstimation() {
   }
 
   function updateOperation(id, field, value) {
-    setOperations(
-      operations.map((o) => (o.id === id ? { ...o, [field]: value } : o)),
+    setOperations((prev) =>
+      prev.map((o) => (o.id === id ? { ...o, [field]: value } : o))
+    );
+  }
+
+  function handleMachineChange(opId, selectedValue) {
+    const matched = machines.find(
+      (m) => String(m._id || m.id) === String(selectedValue)
+    );
+    setOperations((prev) =>
+      prev.map((o) =>
+        o.id === opId
+          ? {
+              ...o,
+              machineId: selectedValue,
+              machineName: matched?.name || "",
+              ratePerHour: Number(matched?.rate ?? matched?.ratePerHour ?? 0),
+            }
+          : o
+      )
     );
   }
 
@@ -504,7 +541,7 @@ export default function CostEstimation() {
                 ) : (
                   operations.map((op) => {
                     const machine = machines.find(
-                      (m) => (m._id || m.id) === op.machineId,
+                      (m) => String(m._id || m.id) === String(op.machineId),
                     );
                     const cost =
                       (machine?.rate || machine?.ratePerHour || 0) * op.hours;
@@ -516,24 +553,8 @@ export default function CostEstimation() {
                         <div className="col-span-3">
                           <select
                             value={op.machineId || ""}
-                            onChange={(e) => {
-                              const v = e.target.value;
-                              const m = machines.find(
-                                (mm) => String(mm._id || mm.id) === String(v),
-                              );
-                              updateOperation(op.id, "machineId", v);
-                              updateOperation(
-                                op.id,
-                                "machineName",
-                                m?.name || "",
-                              );
-                              updateOperation(
-                                op.id,
-                                "ratePerHour",
-                                Number(m?.rate ?? m?.ratePerHour ?? 0),
-                              );
-                            }}
-                            className="w-full text-sm border border-slate-200 rounded-md bg-white px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-900"
+                            onChange={(e) => handleMachineChange(op.id, e.target.value)}
+                            className="w-full text-sm border border-slate-300 rounded-md bg-white px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-900 cursor-pointer text-slate-900"
                           >
                             <option value="">Select machine</option>
                             {machines.map((m) => {
@@ -546,8 +567,8 @@ export default function CostEstimation() {
                             })}
                           </select>
                           {machines.length === 0 && (
-                            <p className="text-xs text-slate-500 mt-1">
-                              No machines available. Add machines in Rate Masters.
+                            <p className="text-xs text-rose-500 mt-1">
+                              No machines found. Please check Rate Masters.
                             </p>
                           )}
                         </div>
