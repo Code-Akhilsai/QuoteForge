@@ -419,18 +419,21 @@ export default function CostEstimation() {
             <CardContent className="space-y-4">
               <div className="space-y-1">
                 <label className="label-field">Select Material</label>
-                <Select
+                <select
                   value={materialSelection}
-                  onValueChange={setMaterialSelection}
-                  className="w-full"
+                  onChange={(e) => setMaterialSelection(e.target.value)}
+                  className="w-full text-sm border border-slate-200 rounded-md bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-900"
                 >
                   <option value="">Choose a material</option>
-                  {materials.map((m) => (
-                    <option key={m._id || m.id} value={m._id || m.id}>
-                      {m.name} (₹{m.rate}/{m.unit})
-                    </option>
-                  ))}
-                </Select>
+                  {materials.map((m) => {
+                    const val = String(m._id || m.id || "");
+                    return (
+                      <option key={val} value={val}>
+                        {m.name} (₹{m.rate}/{m.unit})
+                      </option>
+                    );
+                  })}
+                </select>
                 {materials.length === 0 && (
                   <p className="text-xs text-slate-500">
                     No materials available. Add via Rate Masters or upload data.
@@ -511,36 +514,40 @@ export default function CostEstimation() {
                         className="grid grid-cols-6 gap-2 items-center px-2 py-2 bg-slate-50 rounded border border-slate-100 min-w-150"
                       >
                         <div className="col-span-3">
-                          <Select
-                            value={op.machineId}
-                            onValueChange={(v) => {
+                          <select
+                            value={op.machineId || ""}
+                            onChange={(e) => {
+                              const v = e.target.value;
                               const m = machines.find(
-                                (mm) => (mm._id || mm.id) === v,
+                                (mm) => String(mm._id || mm.id) === String(v),
                               );
                               updateOperation(op.id, "machineId", v);
                               updateOperation(
                                 op.id,
                                 "machineName",
-                                m?.name ?? "",
+                                m?.name || "",
                               );
                               updateOperation(
                                 op.id,
                                 "ratePerHour",
-                                m?.rate || m?.ratePerHour || 0,
+                                Number(m?.rate ?? m?.ratePerHour ?? 0),
                               );
                             }}
-                            className="w-full px-1 py-1 text-sm"
+                            className="w-full text-sm border border-slate-200 rounded-md bg-white px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-900"
                           >
                             <option value="">Select machine</option>
-                            {machines.map((m) => (
-                              <option key={m._id || m.id} value={m._id || m.id}>
-                                {m.name}
-                              </option>
-                            ))}
-                          </Select>
+                            {machines.map((m) => {
+                              const val = String(m._id || m.id || "");
+                              return (
+                                <option key={val} value={val}>
+                                  {m.name} (₹{m.rate ?? m.ratePerHour}/hr)
+                                </option>
+                              );
+                            })}
+                          </select>
                           {machines.length === 0 && (
-                            <p className="text-xs text-slate-500">
-                              No machines available.
+                            <p className="text-xs text-slate-500 mt-1">
+                              No machines available. Add machines in Rate Masters.
                             </p>
                           )}
                         </div>
