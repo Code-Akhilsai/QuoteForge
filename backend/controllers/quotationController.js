@@ -1,6 +1,5 @@
 import { Quotation } from "../models/Quotation.js";
 import { RFQ } from "../models/RFQ.js";
-import { User } from "../models/User.js";
 
 const generateQuotationNumber = async () => {
   const count = await Quotation.countDocuments();
@@ -20,8 +19,19 @@ export const createQuotation = async (req, res) => {
       validTill,
     } = req.body;
 
-    if (!customerName || !productName || !quantity || unitCost === undefined || totalCost === undefined) {
-      return res.status(400).json({ success: false, message: "All required fields must be provided" });
+    if (
+      !customerName ||
+      !productName ||
+      !quantity ||
+      unitCost === undefined ||
+      totalCost === undefined
+    ) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "All required fields must be provided",
+        });
     }
 
     const quotationNumber = await generateQuotationNumber();
@@ -80,7 +90,13 @@ export const getQuotations = async (req, res) => {
 
     const total = await Quotation.countDocuments(query);
 
-    res.json({ success: true, quotations, total, page: parseInt(page), pages: Math.ceil(total / limit) });
+    res.json({
+      success: true,
+      quotations,
+      total,
+      page: parseInt(page),
+      pages: Math.ceil(total / limit),
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -93,7 +109,9 @@ export const getQuotationById = async (req, res) => {
       .populate("rfq", "rfqNumber customerName productName");
 
     if (!quotation) {
-      return res.status(404).json({ success: false, message: "Quotation not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Quotation not found" });
     }
 
     res.json({ success: true, quotation });
@@ -106,16 +124,26 @@ export const updateQuotationStatus = async (req, res) => {
   try {
     const { status } = req.body;
     if (!["draft", "sent", "approved", "rejected"].includes(status)) {
-      return res.status(400).json({ success: false, message: "Invalid status" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid status" });
     }
 
-    const quotation = await Quotation.findById(req.params.id).populate("createdBy", "name email role");
+    const quotation = await Quotation.findById(req.params.id).populate(
+      "createdBy",
+      "name email role",
+    );
     if (!quotation) {
-      return res.status(404).json({ success: false, message: "Quotation not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Quotation not found" });
     }
 
     // Quotes above ₹25 lakh need sales head approval
-    if (quotation.totalCost > 2500000 && !["admin", "sales_head"].includes(req.userObj?.role)) {
+    if (
+      quotation.totalCost > 2500000 &&
+      !["admin", "sales_head"].includes(req.userObj?.role)
+    ) {
       return res.status(403).json({
         success: false,
         message: "Quotes above ₹25 lakh require Sales Head approval",
@@ -125,7 +153,7 @@ export const updateQuotationStatus = async (req, res) => {
     const updated = await Quotation.findByIdAndUpdate(
       req.params.id,
       { status },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     ).populate("createdBy", "name email role");
 
     res.json({ success: true, quotation: updated });
@@ -138,7 +166,9 @@ export const deleteQuotation = async (req, res) => {
   try {
     const quotation = await Quotation.findByIdAndDelete(req.params.id);
     if (!quotation) {
-      return res.status(404).json({ success: false, message: "Quotation not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Quotation not found" });
     }
     res.json({ success: true, message: "Quotation deleted successfully" });
   } catch (error) {

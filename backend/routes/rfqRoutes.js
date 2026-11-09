@@ -6,7 +6,7 @@ import {
   updateRFQ,
   deleteRFQ,
 } from "../controllers/rfqController.js";
-import { protect, authorize } from "../middlewares/authMiddleware.js";
+import { protect } from "../middlewares/authMiddleware.js";
 
 const router = Router();
 

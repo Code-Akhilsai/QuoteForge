@@ -1,10 +1,8 @@
 import multer from "multer";
 import XLSX from "xlsx";
 import { RFQ } from "../models/RFQ.js";
-import { protect, authorize } from "../middlewares/authMiddleware.js";
 
 const storage = multer.memoryStorage();
-const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } });
 
 const parseFile = (buffer) => {
   const workbook = XLSX.read(buffer, { type: "buffer" });
@@ -20,7 +18,9 @@ const normalizeNumber = (v) => {
 export const uploadFile = async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ success: false, message: "No file uploaded" });
+      return res
+        .status(400)
+        .json({ success: false, message: "No file uploaded" });
     }
 
     const rows = parseFile(req.file.buffer);
@@ -39,22 +39,85 @@ export const uploadFile = async (req, res) => {
         return undefined;
       };
 
-      const rfqNumber = tryKey(["RFQ No", "rfqNumber", "RFQ Number", "rfq_no", "RFQ#", "RFQ ID", "rfq_id"]);
-      const customerName = tryKey(["Customer", "customerName", "customer_name", "Customer Name", "client"]);
-      const productName = tryKey(["Part", "Product", "productName", "product_name", "Part Name", "Item", "Description"]);
-      const material = tryKey(["Material", "material"]);
-      const quantity = normalizeNumber(tryKey(["Annual Volume", "quantity", "Quantity", "Annual Volume (units)", "Qty", "Volume"]));
-      const unitCost = normalizeNumber(tryKey(["Hour Rate ₹", "Hour Rate", "unitCost", "Rate", "rate", "Unit Cost", "Price"]));
-      const totalCost = normalizeNumber(tryKey(["Total Cost", "totalCost", "total_cost", "Amount", "Total", "Total Amount"]));
+      const rfqNumber = tryKey([
+        "RFQ No",
+        "rfqNumber",
+        "RFQ Number",
+        "rfq_no",
+        "RFQ#",
+        "RFQ ID",
+        "rfq_id",
+      ]);
+      const customerName = tryKey([
+        "Customer",
+        "customerName",
+        "customer_name",
+        "Customer Name",
+        "client",
+      ]);
+      const productName = tryKey([
+        "Part",
+        "Product",
+        "productName",
+        "product_name",
+        "Part Name",
+        "Item",
+        "Description",
+      ]);
+      const quantity = normalizeNumber(
+        tryKey([
+          "Annual Volume",
+          "quantity",
+          "Quantity",
+          "Annual Volume (units)",
+          "Qty",
+          "Volume",
+        ]),
+      );
+      const unitCost = normalizeNumber(
+        tryKey([
+          "Hour Rate ₹",
+          "Hour Rate",
+          "unitCost",
+          "Rate",
+          "rate",
+          "Unit Cost",
+          "Price",
+        ]),
+      );
+      const totalCost = normalizeNumber(
+        tryKey([
+          "Total Cost",
+          "totalCost",
+          "total_cost",
+          "Amount",
+          "Total",
+          "Total Amount",
+        ]),
+      );
       const rawStatus = tryKey(["Status", "status"]) || "estimating";
       const statusLower = String(rawStatus).toLowerCase().trim();
 
       let mappedStatus = "estimating";
       if (statusLower.includes("draft")) mappedStatus = "draft";
-      else if (statusLower.includes("won") || statusLower.includes("approved") || statusLower.includes("accept")) mappedStatus = "won";
-      else if (statusLower.includes("lost") || statusLower.includes("reject")) mappedStatus = "lost";
-      else if (statusLower.includes("sent") || statusLower.includes("quote") || statusLower.includes("pending")) mappedStatus = "sent";
-      else if (["draft", "estimating", "sent", "won", "lost"].includes(statusLower)) mappedStatus = statusLower;
+      else if (
+        statusLower.includes("won") ||
+        statusLower.includes("approved") ||
+        statusLower.includes("accept")
+      )
+        mappedStatus = "won";
+      else if (statusLower.includes("lost") || statusLower.includes("reject"))
+        mappedStatus = "lost";
+      else if (
+        statusLower.includes("sent") ||
+        statusLower.includes("quote") ||
+        statusLower.includes("pending")
+      )
+        mappedStatus = "sent";
+      else if (
+        ["draft", "estimating", "sent", "won", "lost"].includes(statusLower)
+      )
+        mappedStatus = statusLower;
 
       const autoNumber = `RFQ-${Date.now().toString().slice(-4)}${i + 1}`;
 
@@ -68,14 +131,16 @@ export const uploadFile = async (req, res) => {
         status: mappedStatus,
         priority: "medium",
         deadline: null,
-        estimatedValue: totalCost || (unitCost * (quantity || 1)) || 0,
+        estimatedValue: totalCost || unitCost * (quantity || 1) || 0,
         createdBy: req.user.id,
       };
 
       try {
         const existing = rfqNumber ? await RFQ.findOne({ rfqNumber }) : null;
         if (existing) {
-          await RFQ.findByIdAndUpdate(existing._id, doc, { runValidators: true });
+          await RFQ.findByIdAndUpdate(existing._id, doc, {
+            runValidators: true,
+          });
         } else {
           await RFQ.create(doc);
         }

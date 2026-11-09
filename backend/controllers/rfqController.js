@@ -1,6 +1,4 @@
 import { RFQ } from "../models/RFQ.js";
-import { Quotation } from "../models/Quotation.js";
-import { User } from "../models/User.js";
 
 const generateRFQNumber = async () => {
   const count = await RFQ.countDocuments();
@@ -20,8 +18,19 @@ export const createRFQ = async (req, res) => {
       estimatedValue,
     } = req.body;
 
-    if (!customerName || !customerEmail || !customerPhone || !productName || !quantity) {
-      return res.status(400).json({ success: false, message: "All required fields must be provided" });
+    if (
+      !customerName ||
+      !customerEmail ||
+      !customerPhone ||
+      !productName ||
+      !quantity
+    ) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "All required fields must be provided",
+        });
     }
 
     const rfqNumber = await generateRFQNumber();
@@ -38,7 +47,10 @@ export const createRFQ = async (req, res) => {
       createdBy: req.user.id,
     });
 
-    const populatedRFQ = await RFQ.findById(rfq._id).populate("createdBy", "name email role");
+    const populatedRFQ = await RFQ.findById(rfq._id).populate(
+      "createdBy",
+      "name email role",
+    );
 
     res.status(201).json({ success: true, rfq: populatedRFQ });
   } catch (error) {
@@ -71,7 +83,13 @@ export const getRFQs = async (req, res) => {
 
     const total = await RFQ.countDocuments(query);
 
-    res.json({ success: true, rfqs, total, page: parseInt(page), pages: Math.ceil(total / limit) });
+    res.json({
+      success: true,
+      rfqs,
+      total,
+      page: parseInt(page),
+      pages: Math.ceil(total / limit),
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -79,7 +97,10 @@ export const getRFQs = async (req, res) => {
 
 export const getRFQById = async (req, res) => {
   try {
-    const rfq = await RFQ.findById(req.params.id).populate("createdBy", "name email role");
+    const rfq = await RFQ.findById(req.params.id).populate(
+      "createdBy",
+      "name email role",
+    );
     if (!rfq) {
       return res.status(404).json({ success: false, message: "RFQ not found" });
     }
