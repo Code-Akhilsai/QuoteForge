@@ -14,8 +14,8 @@ customer enquiries, extract RFQ details with AI assistance, estimate
 material and machining costs, maintain centralized rate masters, and
 manage quotation reviews through role-based access.
 
-**Live application:** https://quoteforge123.netlify.app\
-**Backend API:** https://quoteforge-e9c0.onrender.com\
+**Live application:** https://quoteforge123.netlify.app
+**Backend API:** https://quoteforge-e9c0.onrender.com
 **GitHub repository:** https://github.com/Code-Akhilsai/QuoteForge
 
 ------------------------------------------------------------------------
